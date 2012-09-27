@@ -1,0 +1,43 @@
+# Copyright (c) 2012 Abid Hasan Mujtaba
+# See the file LICENSE for copying permission.
+
+
+Installation Instructions:
+
+Install from Source:
+
+
+	It is recommended that one download the tar-ball and confirm the md5sum (or sha256) hash as well as the signature of the archive.
+
+
+	Create the folder $HOME/.fetchheaders (~/.fetchheaders).
+
+
+	After having extracted the tar-ball move the configuration and specification files (fetchheaders.conf and fetchheaders.conf.spec) to $HOME/.fetchheaders.
+
+
+	The .py files (fetchheaders.py, imapServer.py and miscClasses.py) must be kept in the same folder. $HOME/.fetchheaders can be used for this purpose.
+
+
+	It is customary to make the fetchheaders.py folder executable.
+
+		Example: In Ubuntu run:
+			
+			chmod +x ~/.fetchheaders/fetchheaders.py
+
+
+	Create a symbolic link to fetchheaders.py and place it in an appropriate folder in the system path ($PATH) for example /usr/local/bin/.
+		
+		Example: In Ubuntu to create a symbolic link for the file ~/.fetchheaders/fetchheaders.py in /usr/local/bin run:
+
+			sudo ln -s ~/.fetchheaders/fetchheaders.py /usr/local/bin/fetchheaders
+
+			This will allow one to simply run the command 'fetchheaders' from any terminal or bash script to launch the program. Alternately one can place an alias in ~/.bashrc
+
+
+
+
+Author: Abid H. Mujtaba
+Email: abid.naqvi83@gmail.com
+
+Date: Sep. 24, 2012
