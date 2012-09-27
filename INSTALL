@@ -33,6 +33,13 @@ Install from Source:
 			sudo ln -s ~/.fetchheaders/fetchheaders.py /usr/local/bin/fetchheaders
 
 			This will allow one to simply run the command 'fetchheaders' from any terminal or bash script to launch the program. Alternately one can place an alias in ~/.bashrc
+	
+	
+	To install the man page copy fetchheaders.1.gz in to /usr/share/man/man1/
+
+		Example: In Ubuntu one would need to use sudo (root privelleges) to copy the file:
+
+			sudo cp ~/.fetchheaders/fetchheaders.1.gz /usr/share/man/man1/
 
 
 
@@ -40,4 +47,4 @@ Install from Source:
 Author: Abid H. Mujtaba
 Email: abid.naqvi83@gmail.com
 
-Date: Sep. 24, 2012
+Date: Sep. 26, 2012
