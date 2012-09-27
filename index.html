@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="fetchheaders : Fetches and displays email headers from secure IMAP servers without downloading complete emails. (python applicaton)" />
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>fetchheaders</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/abid-mujtaba/fetchheaders">View on GitHub</a>
+
+          <h1 id="project_title">fetchheaders</h1>
+          <h2 id="project_tagline">Fetches and displays email headers from secure IMAP servers without downloading complete emails. (python applicaton)</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/abid-mujtaba/fetchheaders/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/abid-mujtaba/fetchheaders/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p>fetchheaders is a python script that uses multiple threads to simultaneously (using multiple threads) access a number of email accounts on imap servers in a secure fashion (using SSL over port 443). The primary purpose of this script is to fetch and display header information; in particular date, from and subject of emails; in the chosen folder in each account (INBOX by default) without having to download entire emails.</p>
+
+<p><strong>Note:</strong> This program can only access IMAP servers which allow SSL-based access over port 443.</p>
+
+<p>Note: This program was written using Python 2.7 on an Ubuntu 12.04 machine. It hasn't been tested on different versions of Python or different OSes but is expected to behave properly on different systems.</p>
+
+<p>To set up account access fill in the configuration file ~/.fetchheaders/fetchheaders.conf. One can create multiple configuration files and refer to a particular one using the -c switch when calling the fetchheaders.py script. Run 'fetchheaders.py -h' for details.</p>
+
+<p>Default behaviour is set up in the configuration file.</p>
+
+<p>The configuration behaviour can be over-ridden by passing command-line arguments when the fetchheaders script is called. Run 'fetchheaders -h' to get a list of the command-line arguments. </p>
+
+<p>If called with the -n switch the program will return only the number of emails in the default folder (number of unseen message and the total number of messages) similar to fetchmail's -c switch.</p>
+
+<p><strong>For more details please read the man page.</strong></p>
+
+<p>Please feel free to email the author of the program if problems arise.</p>
+
+<p>Author: Abid H. Mujtaba
+Email: <a href="mailto:abid.naqvi83@gmail.com">abid.naqvi83@gmail.com</a></p>
+
+<p>Date: Sep. 24, 1012</p>
+
+<p>Copyright (c) 2012 Abid Hasan Mujtaba</p>
+
+<p>See the file LICENSE for copying permission.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">fetchheaders maintained by <a href="https://github.com/abid-mujtaba">abid-mujtaba</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
