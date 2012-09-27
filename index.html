@@ -33,6 +33,24 @@
       <section id="main_content" class="inner">
         <p>fetchheaders is a python script that uses multiple threads to simultaneously (using multiple threads) access a number of email accounts on imap servers in a secure fashion (using SSL over port 443). The primary purpose of this script is to fetch and display header information; in particular date, from and subject of emails; in the chosen folder in each account (INBOX by default) without having to download entire emails.</p>
 
+<p>Here are a few screenshots:</p>
+
+<p><em>fetchheaders run with default settings. It takes fetchheaders less than a second to download header information from 3 different IMAP email accounts:</em></p>
+
+<p><img src="https://github.com/abid-mujtaba/fetchheaders/blob/master/screenshots/fetchheaders%20screenshot.png?raw=true" alt="screenshot: fetchheaders (default)"></p>
+
+<p><em>fetchheaders displaying both seen and unseen messages:</em></p>
+
+<p><img src="https://github.com/abid-mujtaba/fetchheaders/blob/master/screenshots/fetchheaders%20all%20screenshot.png?raw=true" alt="screenshot: fetchheaders -A"></p>
+
+<p><em>fetchheaders displaying only number of messages (analogous to 'fetchmail -c') but note that it takes it only 0.56 seconds:</em></p>
+
+<p><img src="https://github.com/abid-mujtaba/fetchheaders/blob/master/screenshots/fetchheaders%20-n%20screenshot.png?raw=true" alt="screenshot: fetchheaders -n"></p>
+
+<p><em>fetchheaders displaying all email headers with mutt-style flags:</em></p>
+
+<p><img src="https://github.com/abid-mujtaba/fetchheaders/blob/master/screenshots/fetchheaders%20flags%20screenshot.png?raw=true" alt="screenshot: fetchheaders -A --showFlags"></p>
+
 <p><strong>Note:</strong> This program can only access IMAP servers which allow SSL-based access over port 443.</p>
 
 <p>Note: This program was written using Python 2.7 on an Ubuntu 12.04 machine. It hasn't been tested on different versions of Python or different OSes but is expected to behave properly on different systems.</p>
