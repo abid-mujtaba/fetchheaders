@@ -1,13 +1,32 @@
 # Copyright (c) 2012 Abid Hasan Mujtaba
 # See the file LICENSE for copying permission.
 
+# This file contains instructions on installing and uninstalling 'fetchheaders'. The recommened technique is to use make. For available options run 'make help'.
+#
+# Note: Any commands (including make commands) that require copying or deleting files in folders accessible only by root must be run as root. In Ubuntu this corresponds to prefacing said commands with 'sudo'.
 
-Installation Instructions:
 
-Install from Source:
+INSTALLATION INSTRUCTIONS:
 
 
-	It is recommended that one download the tar-ball and confirm the md5sum (or sha256) hash as well as the signature of the archive.
+Install from Source (using make):
+
+	For a brand new install run:
+
+		make install
+		sudo make install_binary
+
+	To over-write the configuration files (to create clean configuration files):
+
+		make config
+
+	For details on all available make options:
+
+		make help
+
+
+
+Install from Source (manual):
 
 
 	Create the folder $HOME/.fetchheaders (~/.fetchheaders).
@@ -41,6 +60,31 @@ Install from Source:
 
 			sudo cp ~/.fetchheaders/fetchheaders.1.gz /usr/share/man/man1/
 
+
+
+
+UNINSTALLATION INSTRUCTIONS:
+
+
+Uninstall (using make):
+
+	To remove all files except configuration files:
+
+		sudo make uninstall
+
+	To remove all files including the configuration files:
+
+		sudo make purge
+
+
+
+Uninstall (manual):
+
+	Simply delete all files from ~/.fetchheaders with the possible exception of fetchheaders.conf and fetchheaders.conf.spec
+
+	Delete /usr/local/bin/fetchheaders
+
+	Delete /usr/share/man/man1/fetchheaders.1.gz
 
 
 
