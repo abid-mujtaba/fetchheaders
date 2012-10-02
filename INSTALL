@@ -24,6 +24,10 @@ Install from Source (using make):
 
 		make help
 
+	Note: 	To install the binary (symbolic link actually) to a location other that /usr/local/bin change the BIN_LOCATION variable at the top of the Makefile.
+		
+		To NOT install the manpage change the value of the CREATE_MANPAGE variable to 0.
+
 
 
 Install from Source (manual):
