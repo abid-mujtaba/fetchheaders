@@ -325,107 +325,109 @@ def pollAccount( account ) :
 
 			ids = mail.getUids( "all" )
 
-
-		data = mail.fetchHeaders( ids, ['from', 'subject', 'date'] )
-
+		if len( ids ) > 0 :		# There has to be at least one email to fetch data for otherwise fetchHeaders will throw up an errro
 
 
-		# We configure the behaviour of the program by creating anonymous (lambda functions) which we choose on the basis of configuration choices. This means that the test need only be performed once.
-
-		if account[ 'latestEmailFirst' ] :		# We define an anonymous function that modifies the order in which we access UIDs based on the configuration.
-
-			orderUid = lambda ii: len( ids ) - 1 - ii	# Access UIDs in reverse order since the latest email has the largest UID
-
-		else :
-
-			orderUid = lambda ii: ii			# Access emails in ascending order of UID which corresponds to latest email last
-
-
-
-		if len(ids) > 100 :		# Get number of digits of total number of messages.
-
-			return str( len( str( len(ids) ) ) )		# Used to get number of digits in the number for total number of messages. Crude Hack at best.
-		else :
-
-			numDigits = '2'
-
-
-
-		if account[ 'showUnseen' ] :		# Show only unseen messages
-
-
-			for ii in range( len( ids ) ) :
-		
-				uid = ids[ orderUid( ii ) ]
-		
-				line = data[ uid ]		
-		
-				strFrom = line[ 'from' ]
-		
-				m = re.match( '\"?([^<]*?)\"? <.*', strFrom )
-		
-				if m:
-		
-					strFrom = m.group(1)
-
-
-				# Now we extract the date from the header information and place it in the output format we want. The fucntionality has been encoded in a separate function:
-
-				strDate = convertDate( line[ 'date' ] )
-		
-				buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + '.  ' + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubjectUnseen, fill = False ) )
-
-
-		else :		# Show all messages
-
-			dicFlags = mail.fetchFlags( ids )		# Get flags for each message so that we can distinguish between seen and unseen messages
-
-			reSeen = re.compile( '.*Seen.*' )
-
-
-			if showFlags :		# If so configured we display the flag associated with each message.
-				
-				flags = lambda x : '  [ ' + cW( x, 2, colorFlag ) + ']   '
-
+			data = mail.fetchHeaders( ids, ['from', 'subject', 'date'] )
+	
+	
+	
+			# We configure the behaviour of the program by creating anonymous (lambda functions) which we choose on the basis of configuration choices. This means that the test need only be performed once.
+	
+			if account[ 'latestEmailFirst' ] :		# We define an anonymous function that modifies the order in which we access UIDs based on the configuration.
+	
+				orderUid = lambda ii: len( ids ) - 1 - ii	# Access UIDs in reverse order since the latest email has the largest UID
+	
 			else :
-
-				flags = lambda x : '.   '
-
-
-			for ii in range( len( ids ) ) :
-
-				uid = ids[ orderUid( ii ) ]
-
-				line = data[ uid ]
-
-				strFrom = ( '{:<30.30}' ).format( line[ 'from' ] )
-
-				m = re.match( '\"?([^<]*?)\"? <.*', strFrom )
-		
-				if m:
-		
-					strFrom = m.group(1)
-
-				# Now we extract the date from the header information.
-
-				strDate = convertDate( line[ 'date' ] )
-
-				# Now we use the flags to distinguish betweeen seen and unseen messages:
-
-				m = reSeen.match( dicFlags[ uid ] )
-
-				if m :		# Flag has a Seen flag. We change color.
-		
-					flag = ' '
-					colorSubject = colorSubjectSeen
-
-				else :
+	
+				orderUid = lambda ii: ii			# Access emails in ascending order of UID which corresponds to latest email last
+	
+	
+	
+			if len(ids) > 100 :		# Get number of digits of total number of messages.
+	
+				return str( len( str( len(ids) ) ) )		# Used to get number of digits in the number for total number of messages. Crude Hack at best.
+			else :
+	
+				numDigits = '2'
+	
+	
+	
+			if account[ 'showUnseen' ] :		# Show only unseen messages
+	
+	
+				for ii in range( len( ids ) ) :
+			
+					uid = ids[ orderUid( ii ) ]
+			
+					line = data[ uid ]		
+			
+					strFrom = line[ 'from' ]
+			
+					m = re.match( '\"?([^<]*?)\"? <.*', strFrom )
+			
+					if m:
+			
+						strFrom = m.group(1)
+	
+	
+					# Now we extract the date from the header information and place it in the output format we want. The fucntionality has been encoded in a separate function:
+	
+					strDate = convertDate( line[ 'date' ] )
+			
+					buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + '.  ' + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubjectUnseen, fill = False ) )
+	
+	
+			else :		# Show all messages
+	
+				dicFlags = mail.fetchFlags( ids )		# Get flags for each message so that we can distinguish between seen and unseen messages
+	
+				reSeen = re.compile( '.*Seen.*' )
+	
+	
+				if showFlags :		# If so configured we display the flag associated with each message.
 					
-					flag = 'N'
-					colorSubject = colorSubjectUnseen
-
-
-				buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
+					flags = lambda x : '  [ ' + cW( x, 2, colorFlag ) + ']   '
+	
+				else :
+	
+					flags = lambda x : '.   '
+	
+	
+				for ii in range( len( ids ) ) :
+	
+					uid = ids[ orderUid( ii ) ]
+	
+					line = data[ uid ]
+	
+					strFrom = ( '{:<30.30}' ).format( line[ 'from' ] )
+	
+					m = re.match( '\"?([^<]*?)\"? <.*', strFrom )
+			
+					if m:
+			
+						strFrom = m.group(1)
+	
+					# Now we extract the date from the header information.
+	
+					strDate = convertDate( line[ 'date' ] )
+	
+					# Now we use the flags to distinguish betweeen seen and unseen messages:
+	
+					m = reSeen.match( dicFlags[ uid ] )
+	
+					if m :		# Flag has a Seen flag. We change color.
+			
+						flag = ' '
+						colorSubject = colorSubjectSeen
+	
+					else :
+						
+						flag = 'N'
+						colorSubject = colorSubjectUnseen
+	
+	
+					buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
 	
 	mail.logout()
 
