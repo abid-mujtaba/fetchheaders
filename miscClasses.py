@@ -129,7 +129,8 @@ class LocalTimezone(tzinfo):
         if self._isdst(dt):
             return DSTDIFF
         else:
-            return ZERO
+#            return ZERO
+            return timedelta(0)
 
     def tzname(self, dt):
         return _time.tzname[self._isdst(dt)]
