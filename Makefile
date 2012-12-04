@@ -10,6 +10,10 @@
 
 BIN_LOCATION=/usr/local/bin
 
+# All of the files of the package will be stored in PACKAGE_LOCATION, which will be created if required. The binary will be a symbolic link to $PACKAGE_LOCATION/fetchheaders.py
+
+PACKAGE_LOCATION=/usr/local/share/fetchheaders
+
 # Change the value of CREATE_MANPAGE to zero (0) if you don't want to install a manpage.
 
 CREATE_MANPAGE=1
@@ -18,87 +22,70 @@ CREATE_MANPAGE=1
 
 scripts = fetchheaders.py miscClasses.py imapServer.py
 
-configs = fetchheaders.conf fetchheaders.conf.spec
+config = fetchheaders.conf
+
+spec = fetchheaders.conf.spec
 
 manFiles = fetchheaders.1.gz
 
 
 
-.PHONY: install uninstall purge config install_binary help
+.PHONY: install uninstall purge config help
 
 install:
 
-	@echo -e "\nInstalling the application files. Run 'make install_binary' to install the binary and manpage. Run 'make help' for a list of options.\n"
+	@echo -e "\nInstalling the application files. This command needs to be run as root (perhaps using sudo) since it installs files in /usr/local/share/ and /usr/local/bin/. Run 'make config' to install the configuration file if installing 'fetchheaders' for first time or if you need to over-write the existing configuration file with the default copy.\n"
 	
 # Check if ~/.fetchheaders folder exists. If not create it :
 
-	@if [ ! -d ~/.fetchheaders ]; then \
+	@if [ ! -d $(PACKAGE_LOCATION) ]; then \
 	\
-		mkdir ~/.fetchheaders ; \
-		echo -e "mkdir ~/.fetchheaders\n" ; \
+		mkdir $(PACKAGE_LOCATION) ; \
+		echo -e "mkdir $(PACKAGE_LOCATION)\n" ; \
 	fi
 
-# Copy .py scripts to ~/.fetchheaders :
+# Copy .py scripts and spec file to PACKAGE_LOCATION :
 
-	@for file in $(scripts); do \
+	@for file in $(scripts) $(spec); do \
 	\
-		cp $$file ~/.fetchheaders/ ; \
-		echo "cp $$file ~/.fetchheaders/" ; \
+		cp $$file $(PACKAGE_LOCATION) ; \
+		echo "cp $$file $(PACKAGE_LOCATION)" ; \
 	done
 
-# Check if configuration and specificiation files exist. If not copy them.
+## Check if configuration file exists. If not copy it.
+#
+#	@echo -e "\nChecking if configuration file existis and copying it if it does NOT.\n"
+#
+#	@if [ ! -f ~/.fetchheaders.conf ]; then \
+#	\
+#		cp fetchheaders.conf ~/ ; \
+#	\
+#	fi ;
 
-	@echo -e "\nChecking if configuration files exist and copying them if they do NOT.\n"
-
-	@for file in $(configs); do \
-	\
-		if [ ! -f ~/.fetchheaders/$$file ]; then \
-		\
-			cp $$file ~/.fetchheaders/ ; \
-		\
-			echo "cp $$file ~/.fetchheaders/" ; \
-		fi ; \
-	done
-
-
-
-
-install_binary:
-
-	@echo -e "\nInstalling the binary to $(BIN_LOCATION) and the manpage to /usr/share/man/man1/. Should be run as root.\n"
-
-# Copy manpage if the CREATE_MANPAGE flag is equal to 1. This process will require root access since it accesses the /usr/... folder tree:
-	
 ifeq ($(CREATE_MANPAGE),1)
 
 	@cp fetchheaders.1.gz /usr/share/man/man1/
-	
-	@echo -e "\ncp fetchheaders.1.gz /usr/share/man/man1/"
+
 endif
 
 # Create symbolic link to the fetchheaders main script
 
-	@ln -s ~/.fetchheaders/fetchheaders.py $(BIN_LOCATION)/fetchheaders
+	@ln -s $(PACKAGE_LOCATION)/fetchheaders.py $(BIN_LOCATION)/fetchheaders
 
-	@echo -e "\nln -s ~/.fetchheaders/fetchheaders.py $(BIN_LOCATION)/fetchheaders"
+	@echo -e "\nln -s $(PACKAGE_LOCATION)/fetchheaders.py $(BIN_LOCATION)/fetchheaders"
 
 
 
 
 config:
 
-# Installs the configuration and specification file, possibly over-writing ones that already exist.
+# Installs the configuration file, possibly over-writing the one that already exists.
 	
-	@echo -e "\nInstalling (and possibly over-writing) configuration files.\n"
+	@echo -e "\nInstalling (and possibly over-writing) configuration file.\n"
 
-	@for file in $(configs); do \
-	\
-		cp $$file ~/.fetchheaders/ ; \
-	\
-		echo "cp $$file ~/.fetchheaders/" ; \
-	done
-	
-	# Use a for loop here
+	@cp fetchheaders.conf ~/.fetchheaders.conf
+
+	@echo "cp fetchheaders.conf ~/.fetchheaders.conf"
 
 
 
@@ -108,36 +95,21 @@ purge: uninstall
 
 # Remove the configuration files and then run the "uninstall" recipe
 
-	@echo -e "\nRemoving configuration files.\n"
-
-	@-for file in $(configs); do \
-	\
-		rm ~/.fetchheaders/$$file ; \
-	\
-		echo "rm ~/.fetchheaders/$$file" \
-	done
-
+	@echo -e "\nRemoving configuration file.\n"
+	
+	-rm ~/.fetchheaders.conf
 
 
 
 uninstall:
 
-	@echo -e "\nRemoving the fetchheaders scripts and manpage but NOT the configuration files (run 'make purge' to remove configuration files as well).\n"
+	@echo -e "\nRemoving the fetchheaders scripts and manpage but NOT the configuration file UNLESS 'make purge' has been issued.\n"
 
-# Removing 'fetchheaders' scripts but not configuration files
+# Removing entire pakcage folder:
 
-	@-for file in $(scripts); do \
-	\
-		rm ~/.fetchheaders/$$file ; \
-	\
-		echo "rm ~/.fetchheaders/$$file" ; \
-	done
+	-rm -r $(PACKAGE_LOCATION)
 
-# Removing compile python files *.pyc
-
-	-rm ~/.fetchheaders/*.pyc
-
-	@echo "rm ~/.fetchheaders/*.pyc"
+	@echo -e "rm -r $(PACKAGE_LOCATION))"
 
 
 # Removing 'fetchheaders' symoblic link, requires root access.
@@ -163,7 +135,6 @@ help:
 
 	@echo -e "\nOptions:" 
 	@echo -e "\n\tinstall - Installs the applications scripts and the configuration files unless the configuration files already exist in which case it DOES not over-write them."
-	@echo -e "\n\tinstall_binary Installs the fetchheaders binary to BIN_LOCATION and the manpage to /usr/share/man/man1/. Should be run as root."
-	@echo -e "\n\tuninstall - Remove application scripts, binary and manpage. Leave the configuration files. Run as root if you wish to remove the binary and manpage."
-	@echo -e "\n\tpurge - Remove ALL application files and folders including the configuration files. Run as root if you wish to remove the binary and mangpage."
-	@echo -e "\n\tconfig - Install the configuration and specification files, over-writing existing ones. Use to create clean configuration and specification files."
+	@echo -e "\n\tuninstall - Remove application scripts, binary and manpage. Leave the configuration files. Run as root."
+	@echo -e "\n\tpurge - Remove ALL application files and folders including the configuration file. Run as root."
+	@echo -e "\n\tconfig - Install the configuration file, over-writing existing one. Use to create clean configuration file."

@@ -485,9 +485,11 @@ def main() :
 	import os
 
 	homeFolder = os.getenv( "HOME" )	# Basically the value in $HOME
+	packageFolder = '/usr/local/share/fetchheaders'		# Location of folder containing all package files
 
-	fileConf = homeFolder + '/.fetchheaders/fetchheaders.conf'
-	fileSpec = homeFolder + '/.fetchheaders/fetchheaders.conf.spec'
+	fileConf = homeFolder + '/.fetchheaders.conf'
+
+	fileSpec = packageFolder + '/fetchheaders.conf.spec'	# Path to config specification file
 
 	# Check if a configuration file has been specified using the -c or --config flag.
 
