@@ -290,9 +290,10 @@ def pollAccount( account ) :
 	numUnseen = -1		# Set unequal to zero in case showNums = False
 
 
-	from miscClasses import buffer
+#	from miscClasses import buffer
+#
+#	buf = buffer()		# Create print buffer
 
-	buf = buffer()		# Create print buffer
 
 	
 	mail = imapServer( account['host'] )
@@ -302,14 +303,23 @@ def pollAccount( account ) :
 	mail.examine()
 
 
-	buf.bprint0( cW( account['name'] + ':', 12, colorTitle ) ) 
+#	buf.bprint0( cW( account['name'] + ':', 12, colorTitle ) ) 
+
+	from miscClasses import Output
+
+	out = Output( account )		# Create Output data structure for imminent population
+
 
 	
 	if account[ 'showNums' ] :
 
 		(numAll, numUnseen) = mail.numMsgs()
 
-		buf.bprint( '( total: ' + str( numAll ) + ' | unseen: ' + str( numUnseen ) + ' )\n' )
+#		buf.bprint( '( total: ' + str( numAll ) + ' | unseen: ' + str( numUnseen ) + ' )\n' )
+		
+#		out.numbers( numAll, numUnseen )
+		out.numAll = numAll		# Store numbers in output object
+		out.numUnseen = numUnseen
 
 
 	if not account[ 'showOnlyNums' ] :
@@ -325,7 +335,11 @@ def pollAccount( account ) :
 
 			ids = mail.getUids( "all" )
 
-		if len( ids ) > 0 :		# There has to be at least one email to fetch data for otherwise fetchHeaders will throw up an errro
+
+		out.uids = ids		# Store the UIDs of the emails retrieived in the general output object
+
+
+		if len( ids ) > 0 :		# There has to be at least one email to fetch data for otherwise fetchHeaders will throw up an error
 
 
 			data = mail.fetchHeaders( ids, ['from', 'subject', 'date'] )
@@ -337,6 +351,8 @@ def pollAccount( account ) :
 			if account[ 'latestEmailFirst' ] :		# We define an anonymous function that modifies the order in which we access UIDs based on the configuration.
 	
 				orderUid = lambda ii: len( ids ) - 1 - ii	# Access UIDs in reverse order since the latest email has the largest UID
+
+				out.uids.reverse()		# We must also flip the order in which the uids are stored so that the lines and uids match
 	
 			else :
 	
@@ -375,7 +391,9 @@ def pollAccount( account ) :
 	
 					strDate = convertDate( line[ 'date' ] )
 			
-					buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + '.  ' + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubjectUnseen, fill = False ) )
+#					buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + '.  ' + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubjectUnseen, fill = False ) )
+
+					out.append( cW( str(ii + 1), numDigits, align = '>' ) + '.  ' + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubjectUnseen, fill = False ) )
 	
 	
 			else :		# Show all messages
@@ -427,11 +445,41 @@ def pollAccount( account ) :
 						colorSubject = colorSubjectUnseen
 	
 	
-					buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
+#					buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
+					
+					out.append( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
 	
 	mail.logout()
 
-	return buf
+#	return buf
+
+	return out		# Return the Output data structure we have just populated
+
+
+
+def display( out ) :
+
+	'''
+	Accepts an Output data structure and prints out the results to the screen in a straight-forward fashion
+	'''
+
+	from miscClasses import colorWidth as cW	# Custom function that sets width of text fields and colors it.
+
+	print( cW( out.settings[ 'name' ] + ':', 12, colorTitle ) ),			# Print name of account and allow for further text
+
+	if out.settings[ 'showNums' ] :
+
+		print( '(total: ' + str( out.numAll ) + ' | unseen: ' + str( out.numUnseen ) + ' )\n' )
+	
+	else:
+		print( '\n' )
+
+
+	for line in out.lines :
+
+		print( line )
+
+
 
 
 
@@ -485,7 +533,8 @@ def main() :
 	import os
 
 	homeFolder = os.getenv( "HOME" )	# Basically the value in $HOME
-	packageFolder = '/usr/local/share/fetchheaders'		# Location of folder containing all package files
+#	packageFolder = '/usr/local/share/fetchheaders'		# Location of folder containing all package files
+	packageFolder = '.'
 
 	fileConf = homeFolder + '/.fetchheaders.conf'
 
@@ -515,11 +564,21 @@ def main() :
 
 	# Begin threaded execution of accessing accounts:
 
-	for buf in threadedExec( servers ) :
+#	for buf in threadedExec( servers ) :
+#
+#		print( '\n' )
+#
+#		buf.dump()
 
-		print( '\n' )
 
-		buf.dump()
+	# What follows is the simplest possible output technique
+
+	print 	# Start with empty line
+
+	for out in threadedExec( servers ) :
+
+		display( out )
+		print( '\n' )		# Separate each account information with 3 lines
 
 
 
