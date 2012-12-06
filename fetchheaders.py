@@ -290,20 +290,12 @@ def pollAccount( account ) :
 	numUnseen = -1		# Set unequal to zero in case showNums = False
 
 
-#	from miscClasses import buffer
-#
-#	buf = buffer()		# Create print buffer
-
-
-	
 	mail = imapServer( account['host'] )
 
 	mail.login( account['username'], account['password'] )
 
 	mail.examine()
 
-
-#	buf.bprint0( cW( account['name'] + ':', 12, colorTitle ) ) 
 
 	from miscClasses import Output
 
@@ -315,9 +307,6 @@ def pollAccount( account ) :
 
 		(numAll, numUnseen) = mail.numMsgs()
 
-#		buf.bprint( '( total: ' + str( numAll ) + ' | unseen: ' + str( numUnseen ) + ' )\n' )
-		
-#		out.numbers( numAll, numUnseen )
 		out.numAll = numAll		# Store numbers in output object
 		out.numUnseen = numUnseen
 
@@ -350,16 +339,11 @@ def pollAccount( account ) :
 	
 			if account[ 'latestEmailFirst' ] :		# We define an anonymous function that modifies the order in which we access UIDs based on the configuration.
 	
-				orderUid = lambda ii: len( ids ) - 1 - ii	# Access UIDs in reverse order since the latest email has the largest UID
-
+				ids.reverse()
 				out.uids.reverse()		# We must also flip the order in which the uids are stored so that the lines and uids match
 	
-			else :
-	
-				orderUid = lambda ii: ii			# Access emails in ascending order of UID which corresponds to latest email last
-	
-	
-	
+
+
 			if len(ids) > 100 :		# Get number of digits of total number of messages.
 	
 				return str( len( str( len(ids) ) ) )		# Used to get number of digits in the number for total number of messages. Crude Hack at best.
@@ -374,7 +358,7 @@ def pollAccount( account ) :
 	
 				for ii in range( len( ids ) ) :
 			
-					uid = ids[ orderUid( ii ) ]
+					uid = ids[ ii ]
 			
 					line = data[ uid ]		
 			
@@ -391,8 +375,6 @@ def pollAccount( account ) :
 	
 					strDate = convertDate( line[ 'date' ] )
 			
-#					buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + '.  ' + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubjectUnseen, fill = False ) )
-
 					out.append( cW( str(ii + 1), numDigits, align = '>' ) + '.  ' + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubjectUnseen, fill = False ) )
 	
 	
@@ -414,7 +396,7 @@ def pollAccount( account ) :
 	
 				for ii in range( len( ids ) ) :
 	
-					uid = ids[ orderUid( ii ) ]
+					uid = ids[ ii ] 
 	
 					line = data[ uid ]
 	
@@ -445,8 +427,6 @@ def pollAccount( account ) :
 						colorSubject = colorSubjectUnseen
 	
 	
-#					buf.bprint( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
-					
 					out.append( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
 	
 	mail.logout()

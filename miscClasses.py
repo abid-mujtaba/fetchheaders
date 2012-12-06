@@ -11,41 +11,6 @@
 
 
 
-#class buffer() :
-#
-#	'''
-#	This class implements a very simplistic buffer for items to be printed to stdout. It stores all items sent to it in a string and then when told dumps all of the string to stdout. The purpose is for it to emulate the standard python print() function but rather than immediately displaying something on stdout this class will store it like a buffer until told to dump its contents.
-#	'''
-#
-#	def __init__( self ) :
-#
-#		self.string = ''	# Initialize central data object
-#
-#	
-#	def bprint( self, string ) :
-#
-#		'''
-#		This is the buffer classes' variant of the standard print() command (hence the 'b' in the beginning of the name. It behaves just like the standard print command (including adding a newline at the end - to avoid this look at bprint0() ).
-#		'''
-#
-#		self.string += string + '\n'		# Like the standard print() function a '\n' (newline) is added to the end
-#
-#	
-#	def bprint0( self, string ) :
-#	
-#		'''
-#		This is a variant on brpint() which does NOT add a newline at the end.
-#		'''
-#		self.string += string		# This is a variant on the print command which does NOT add a newline at the end
-#
-#	def dump( self ) :
-#
-#		print( self.string )		# Dump the entire string to stdout
-#
-#		self.string = ''		# Clear the internal storage string and prepare for new input
-	
-
-
 import threading
 
 class Worker( threading.Thread ) :
@@ -113,17 +78,6 @@ class Output() :
 		self.lines = []			# Stores the lines of output, one for each email as a list of strings
 
 	
-#	def numbers( self, numAll, numUnseen ) :	# Store number of total and unseen messages
-#
-#		self.numAll = numAll
-#		self.numUnseen = numUnseen
-
-
-#	def saveSettings( self, settings ) :		# Stores the 'settings' dictionary associated with the current account
-#
-#		self.settings = account 
-
-
 	def append( self, line ) :		# Append line of output to internal list
 
 		self.lines.append( line )
