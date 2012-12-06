@@ -299,6 +299,7 @@ def pollAccount( account ) :
 
 
 	from miscClasses import Output
+	from miscClasses import Email
 
 	out = Output( account )		# Create Output data structure for imminent population
 
@@ -329,19 +330,16 @@ def pollAccount( account ) :
 		out.uids = deepcopy( ids )		# Store the UIDs of the emails retrieived in the general output object
 
 
-		if len( ids ) > 0 :		# There has to be at least one email to fetch data for otherwise fetchHeaders will throw up an error
+		if len( ids ) > 0 :		# There has to be at least one email to fetch data or otherwise fetchHeaders will throw up an error
 
 
 			data = mail.fetchHeaders( ids, ['from', 'subject', 'date'] )
 	
 	
-	
-			# We configure the behaviour of the program by creating anonymous (lambda functions) which we choose on the basis of configuration choices. This means that the test need only be performed once.
 			if account[ 'latestEmailFirst' ] :		# We define an anonymous function that modifies the order in which we access UIDs based on the configuration.
 	
 				ids.reverse()
 				out.uids.reverse()		# We must also flip the order in which the uids are stored so that the lines and uids match
-
 
 
 			if len(ids) > 100 :		# Get number of digits of total number of messages.
@@ -350,85 +348,53 @@ def pollAccount( account ) :
 			else :
 	
 				numDigits = '2'
-	
-	
-	
-			if account[ 'showUnseen' ] :		# Show only unseen messages
-	
-	
-				for ii in range( len( ids ) ) :
-			
-					uid = ids[ ii ]
-			
-					line = data[ uid ]		
-			
-					strFrom = line[ 'from' ]
-			
-					m = re.match( '\"?([^<]*?)\"? <.*', strFrom )
-			
-					if m:
-			
-						strFrom = m.group(1)
-	
-	
-					# Now we extract the date from the header information and place it in the output format we want. The fucntionality has been encoded in a separate function:
-	
-					strDate = convertDate( line[ 'date' ] )
-			
-					out.append( cW( str(ii + 1), numDigits, align = '>' ) + '.  ' + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubjectUnseen, fill = False ) )
-	
-	
-			else :		# Show all messages
-	
-				dicFlags = mail.fetchFlags( ids )		# Get flags for each message so that we can distinguish between seen and unseen messages
-	
+
+			out.numDigits = numDigits		# Store the number of digits in the object related to the account
+
+
+			reFrom = re.compile( '\"?([^<]*?)\"? <.*' )
+
+			# We begin by scanning all of the the uids extracted and storing the information in the Output object 'out':
+
+			for uid in ids :
+
+				email = Email()		# Create a new Email object for insertion in out.emails
+
+				line = data[ uid ]
+
+				strFrom = ( '{:<30.30}' ).format( line[ 'from' ] )
+
+				m = reFrom.match( strFrom )
+
+				if m:
+					strFrom = m.group(1)
+
+				email.From = strFrom
+				email.Date = convertDate( line[ 'date' ] )
+				email.Subject = line[ 'subject' ]
+
+				out.emails.append( email )
+
+
+			# If we are dealing with all emails we may need additional information stored in 'out'
+
+			if not account[ 'showUnseen' ] :		# this means we are displaying ALL emails, seen and unseen
+
+				dicFlags = mail.fetchFlags( ids )
+
 				reSeen = re.compile( '.*Seen.*' )
-	
-	
-				if showFlags :		# If so configured we display the flag associated with each message.
-					
-					flags = lambda x : '  [ ' + cW( x, 2, colorFlag ) + ']   '
-	
-				else :
-	
-					flags = lambda x : '.   '
-	
-	
+
 				for ii in range( len( ids ) ) :
-	
-					uid = ids[ ii ] 
-	
-					line = data[ uid ]
-	
-					strFrom = ( '{:<30.30}' ).format( line[ 'from' ] )
-	
-					m = re.match( '\"?([^<]*?)\"? <.*', strFrom )
-			
-					if m:
-			
-						strFrom = m.group(1)
-	
-					# Now we extract the date from the header information.
-	
-					strDate = convertDate( line[ 'date' ] )
-	
-					# Now we use the flags to distinguish betweeen seen and unseen messages:
-	
-					m = reSeen.match( dicFlags[ uid ] )
-	
-					if m :		# Flag has a Seen flag. We change color.
-			
-						flag = ' '
-						colorSubject = colorSubjectSeen
-	
+
+					m = reSeen.match( dicFlags[ ids[ ii ] ] )
+
+					if m :		# Flag has a Seen flag. We store that information in 'out'
+
+						out.emails[ ii ].Seen = True
+
 					else :
-						
-						flag = 'N'
-						colorSubject = colorSubjectUnseen
-	
-	
-					out.append( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
-	
+						out.emails[ ii ].Seen = False
+
 	mail.logout()
 
 	return out		# Return the Output data structure we have just populated
@@ -438,7 +404,9 @@ def pollAccount( account ) :
 def display( out ) :
 
 	'''
-	Accepts an Output data structure and prints out the results to the screen in a straight-forward fashion
+	Accepts an Output data structure and prints out the results to the screen.
+	
+	Note: This function carries out all formatting for the output using the purely data-oriented Output object as input. The output is in a text format which can be piped forward
 	'''
 
 	from miscClasses import colorWidth as cW	# Custom function that sets width of text fields and colors it.
@@ -453,10 +421,48 @@ def display( out ) :
 		print( '\n' )
 
 
-	for line in out.lines :
+	# Preamble printed. Now start printing individual email information
 
-		print( line )
+	if out.settings[ 'showUnseen' ] :		# Show only unseen messages
 
+		for ii in range( len( out.emails ) ) :
+			
+			email = out.emails[ ii ]
+	
+			print( cW( str(ii + 1), out.numDigits, align = '>' ) + '.  ' + cW( email.Date, 17, colorDate ) + '    ' + cW( email.From, 30, colorFrom ) + '   ' + cW( email.Subject, 120, colorSubjectUnseen, fill = False ) )
+
+	else :						# Show ALL messages. Different formatting scheme.
+
+		if showFlags :			# Global setting which declares that the flags associated with each message must be displayed
+
+			flags = lambda x : '  [ ' + cW( x, 2, colorFlag ) + ']   '
+
+		else :
+
+			flags = lambda x : '.   '
+
+
+		for ii in range( len( out.emails ) ) :
+
+			email = out.emails[ ii ]
+
+			if email.Seen :			# Email has a Seen flag.
+
+				flag = ' '
+				colorSubject = colorSubjectSeen
+
+			else :
+				flag = 'N'
+				colorSubject = colorSubjectUnseen
+
+				print( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
+				
+				
+
+		
+
+
+		
 
 
 

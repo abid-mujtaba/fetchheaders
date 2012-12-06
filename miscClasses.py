@@ -66,6 +66,12 @@ class Worker( threading.Thread ) :
 
 
 
+class Email :		# Struct like object for storing information about a single email. Members can be created on the fly. Each Output object will contain a list of these.
+
+	subject = ''
+
+
+
 class Output() :
 
 	'''
@@ -75,13 +81,9 @@ class Output() :
 	def __init__( self, settings ) :		# Initialize the account output by storing the account 'settings' dictionary for concurrent use with the lines of output we will be storing
 
 		self.settings = settings	# Store account name in class
-		self.lines = []			# Stores the lines of output, one for each email as a list of strings
+		self.emails = []		# Stores the Email objects, one for each email/uid
 
 	
-	def append( self, line ) :		# Append line of output to internal list
-
-		self.lines.append( line )
-
 
 
 
@@ -113,7 +115,6 @@ class LocalTimezone(tzinfo):
         if self._isdst(dt):
             return DSTDIFF
         else:
-#            return ZERO
             return timedelta(0)
 
     def tzname(self, dt):
