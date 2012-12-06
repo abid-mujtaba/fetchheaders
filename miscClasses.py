@@ -197,25 +197,35 @@ def colorWidth( string, width, color = None, align = '<', fill = True ) :
 
 	# It does so by truncating and formatting the string before applying the color. That way the color wrapper is not included in the truncation and since the terminal will ignore the wrapper we get the correct width text.
 
-	strWidth = str( width )
+	string = strWidth( string, width, align, fill )		# Truncate string to width
+	
+	if color :		# This means the text is to be colored
 
-	# Start by truncating (or expanding if it is too short) the string to the specified width:
+		string = colorText( string, color )		# Function for xterm color wrapper implementation defined above
 
+	return string
+
+
+
+def strWidth( string, width, align = '<', fill = True ) :
+
+	'''
+	This function is meant to accept a string and limit it to certain (if required space-filled) width.
+
+	align: [<>^] with '<' being the default. This is the character that specified the alignment in the string.format command.
+
+	fill: Default value is True. If False is passed then the text is not filled to the specified width by empty space IF the width of the text is less than the limit. Basically this is a truncation command.
+	'''
+	
 	if fill :
-
-		formatString = '{:' + align + strWidth + '.' + strWidth + '}'
+		
+		formatString = '{:' + align + str(width) + '.' + str(width) + '}'
 
 		string = formatString.format( string )
 
 	else :
-
 		if len( string ) > width :		# Truncate the string to the specified width
 
-			string = ( '{:' + align + strWidth + '.' + strWidth + '}' ).format( string )
-
-
-	if color :		# This means the text is to be colored
-
-		string = colorText( string, color )		# Function for xterm color wrapper implementation defined above
+			string = ( '{:' + align + str(width) + '.' + str(width) + '}' ).format( string )
 
 	return string

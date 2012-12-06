@@ -286,6 +286,7 @@ def pollAccount( account ) :
 	from imapServer import imapServer
 	import re
 	from miscClasses import colorWidth as cW	# Custom function that sets width of text fields and colors it.
+	from copy import deepcopy
 
 	numUnseen = -1		# Set unequal to zero in case showNums = False
 
@@ -325,7 +326,7 @@ def pollAccount( account ) :
 			ids = mail.getUids( "all" )
 
 
-		out.uids = ids		# Store the UIDs of the emails retrieived in the general output object
+		out.uids = deepcopy( ids )		# Store the UIDs of the emails retrieived in the general output object
 
 
 		if len( ids ) > 0 :		# There has to be at least one email to fetch data for otherwise fetchHeaders will throw up an error
@@ -336,17 +337,16 @@ def pollAccount( account ) :
 	
 	
 			# We configure the behaviour of the program by creating anonymous (lambda functions) which we choose on the basis of configuration choices. This means that the test need only be performed once.
-	
 			if account[ 'latestEmailFirst' ] :		# We define an anonymous function that modifies the order in which we access UIDs based on the configuration.
 	
 				ids.reverse()
 				out.uids.reverse()		# We must also flip the order in which the uids are stored so that the lines and uids match
-	
+
 
 
 			if len(ids) > 100 :		# Get number of digits of total number of messages.
 	
-				return str( len( str( len(ids) ) ) )		# Used to get number of digits in the number for total number of messages. Crude Hack at best.
+				numDigits = str( len( str( len(ids) ) ) )		# Used to get number of digits in the number for total number of messages. Crude Hack at best.
 			else :
 	
 				numDigits = '2'
@@ -430,8 +430,6 @@ def pollAccount( account ) :
 					out.append( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
 	
 	mail.logout()
-
-#	return buf
 
 	return out		# Return the Output data structure we have just populated
 
@@ -543,13 +541,6 @@ def main() :
 
 
 	# Begin threaded execution of accessing accounts:
-
-#	for buf in threadedExec( servers ) :
-#
-#		print( '\n' )
-#
-#		buf.dump()
-
 
 	# What follows is the simplest possible output technique
 
