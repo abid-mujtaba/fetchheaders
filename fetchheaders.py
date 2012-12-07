@@ -344,10 +344,10 @@ def pollAccount( account ) :
 
 			if len(ids) > 100 :		# Get number of digits of total number of messages.
 	
-				numDigits = str( len( str( len(ids) ) ) )		# Used to get number of digits in the number for total number of messages. Crude Hack at best.
+				numDigits = len( str( len(ids) ) )		# Used to get number of digits in the number for total number of messages. Crude Hack at best.
 			else :
 	
-				numDigits = '2'
+				numDigits = 2
 
 			out.numDigits = numDigits		# Store the number of digits in the object related to the account
 
@@ -455,15 +455,111 @@ def display( out ) :
 				flag = 'N'
 				colorSubject = colorSubjectUnseen
 
-				print( cW( str(ii + 1), numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
+				print( cW( str(ii + 1), out.numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
 				
-				
-
-		
 
 
-		
+def urwidDisplay( servers ) :
 
+	import urwid
+	from miscClasses import strWidth as sW 
+
+	def exit( key ) :		# Exit urwid when q or Q is pressed
+
+		if key in ('q', 'Q') :
+
+			raise urwid.ExitMainLoop()
+	
+	palette = [
+		( 'title', 'yellow', 'dark blue' ),
+		( 'account', 'light red', 'black' ),
+		( 'bw', 'white', 'black' ),
+		( 'flag', 'dark green', 'black' ),
+		( 'date', 'brown', 'black' ),
+		( 'from', 'dark cyan', 'black' ),
+		( 'subject', 'dark green', 'black' ),
+		( 'subjectSeen', 'brown', 'black' ) ]
+
+
+#	title = urwid.AttrMap( urwid.Text( " FetchHeaders      q: Quit    a: Abort    d: Delete    u: UnDelete    j: Down    k: Up" ), 'title' )
+	title = urwid.AttrMap( urwid.Text( " FetchHeaders      q: Quit " ), 'title' )
+	
+	div = urwid.Divider()
+
+	pileList = [ title, div, div ]
+
+
+	for out in threadedExec( servers ) :
+
+		# Construct account line widget
+
+		account = urwid.Text( ( 'account', ' ' + out.settings[ 'name' ] + ':' ) )
+
+		if out.settings[ 'showNums' ] :			# Numbers are supposed to displayed after the account name
+
+			numbers = urwid.Text( ( 'bw', '( total: ' + str( out.numAll ) + ' | unseen: ' + str( out.numUnseen ) + ' )' ) ) 
+
+			accountLine = urwid.Columns( [ ( 'fixed', 13, account ), numbers ] )
+
+		else :			# Don't display numbers
+
+			accountLine = urwid.Columns( [ ( 'fixed', 13, account ) ] )
+
+
+		pileList += [ accountLine, div ] 	# First line displays account name and number of messages
+
+
+		# We now display the email headers
+
+		for ii in range( len( out.emails ) ) :
+
+			email = out.emails[ ii ]
+
+			date = urwid.Text( ( 'date', sW( email.Date, 17 ) ) )
+			From = urwid.Text( ( 'from', sW( email.From, 30 ) ) )
+			serial = urwid.Text( ( 'bw', sW( str(ii + 1), out.numDigits, align = '>' ) ) ) 
+			
+			if out.settings[ 'showUnseen' ] or (not email.Seen) :		# Show only unseen messages or show All message but current one is unseen
+
+				subject = urwid.Text( ( 'subject', sW( email.Subject, 120 ) ) )
+			
+			else:
+
+				subject = urwid.Text( ( 'subjectSeen', sW( email.Subject, 120 ) ) )
+
+
+			if showFlags :		# Flags are to be displayed
+
+				if email.Seen :
+
+					ch = " "
+
+				else :
+					ch = "N"
+
+				sep = [ ('fixed', 2, urwid.Text(( 'bw', " [" ))), ('fixed', 3, urwid.Text(( 'flag', ' ' + ch + ' ' ))), ('fixed', 4, urwid.Text(( 'bw', "]   " ))) ] 
+			
+			else :
+				sep = [ ( 'fixed', 3, urwid.Text(( 'bw', ".  " )) ) ]
+
+
+			lineList = [ ('fixed', out.numDigits, serial) ] + sep + [ ('fixed', 21, date ), ('fixed', 34, From), subject ]
+
+			line = urwid.Columns( lineList )
+
+			pileList.append( line )
+
+
+		pileList += [div, div]			# Two empty lines after account ends
+
+
+	pile = urwid.Pile( pileList )
+
+	fill = urwid.Filler( pile, valign = 'top' )
+
+	loop = urwid.MainLoop( fill, palette, unhandled_input = exit )
+
+	loop.run()
 
 
 
@@ -550,12 +646,16 @@ def main() :
 
 	# What follows is the simplest possible output technique
 
-	print 	# Start with empty line
+#	print 	# Start with empty line
+#
+#	for out in threadedExec( servers ) :
+#
+#		display( out )
+#		print( '\n' )		# Separate each account information with 3 lines
 
-	for out in threadedExec( servers ) :
+	# This is the simplistic urwid implementation with no input control, just display:
 
-		display( out )
-		print( '\n' )		# Separate each account information with 3 lines
+	urwidDisplay( servers )
 
 
 
