@@ -486,7 +486,11 @@ def urwidDisplay( servers ) :
 	
 	div = urwid.Divider()
 
-	pileList = [ title, div, div ]
+#	pileList = [ title, div, div ]
+	
+	titlePile = urwid.Pile( [title, div] )
+
+	emailList = []
 
 
 	for out in threadedExec( servers ) :
@@ -506,7 +510,9 @@ def urwidDisplay( servers ) :
 			accountLine = urwid.Columns( [ ( 'fixed', 13, account ) ] )
 
 
-		pileList += [ accountLine, div ] 	# First line displays account name and number of messages
+#		pileList += [ accountLine, div ] 	# First line displays account name and number of messages
+
+		emailList += [ accountLine, div ] 	# First line displays account name and number of messages
 
 
 		# We now display the email headers
@@ -547,17 +553,27 @@ def urwidDisplay( servers ) :
 
 			line = urwid.Columns( lineList )
 
-			pileList.append( line )
+#			pileList.append( line )
+
+			emailList.append( line )
 
 
-		pileList += [div, div]			# Two empty lines after account ends
+#		pileList += [div, div]			# Two empty lines after account ends
+
+		emailList += [div, div]			# Two empty lines after account ends
 
 
-	pile = urwid.Pile( pileList )
+#	pile = urwid.Pile( pileList )
 
-	fill = urwid.Filler( pile, valign = 'top' )
+#	fill = urwid.Filler( pile, valign = 'top' )
 
-	loop = urwid.MainLoop( fill, palette, unhandled_input = exit )
+	listbox = urwid.ListBox( emailList )
+
+	frame = urwid.Frame( listbox, header = titlePile )
+
+#	loop = urwid.MainLoop( fill, palette, unhandled_input = exit )
+
+	loop = urwid.MainLoop( frame, palette, unhandled_input = exit )
 
 	loop.run()
 
