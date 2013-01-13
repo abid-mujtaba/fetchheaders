@@ -15,7 +15,7 @@
 
 # Create global variables that implement global settings which are used by the following functions.
 
-maxThreads = 5		# This value will be over-written by the global defaul and possibly a command-line argument
+maxThreads = 5		# This value will be over-written by the global default and possibly a command-line argument
 
 colorTitle = None
 colorFlag = None
@@ -275,131 +275,6 @@ def applyGlobalSettings( globalSettings ) :
 
 
 
-def pollAccount( account ) :
-
-	'''
-	This function accepts a dictionary associated with a SINGLE account (a particular email address on a particular imap server) and carries out all the actions required to connect with said account (poll it) and get email information AND display it.
-	'''
-
-	# Note: The way this function is currently constructed it produces no direct ouput to stdout but rather stores it in a buffer class object which it returns. The calling function decides when to display the information. This has been done to facilitate the parallelizing of polling of the accounts.
-
-	from imapServer import imapServer
-	import re
-	from miscClasses import colorWidth as cW	# Custom function that sets width of text fields and colors it.
-	from copy import deepcopy
-
-	numUnseen = -1		# Set unequal to zero in case showNums = False
-
-
-	mail = imapServer( account['host'] )
-
-	mail.login( account['username'], account['password'] )
-
-	mail.examine()
-
-
-	from miscClasses import Output
-	from miscClasses import Email
-
-	out = Output( account )		# Create Output data structure for imminent population
-
-
-	
-	if account[ 'showNums' ] :
-
-		(numAll, numUnseen) = mail.numMsgs()
-
-		out.numAll = numAll		# Store numbers in output object
-		out.numUnseen = numUnseen
-
-
-	if not account[ 'showOnlyNums' ] :
-
-
-		from miscClasses import convertDate		# Custom function that converts imap returned date string to the format required
-
-		if account[ 'showUnseen' ] :		# show only unseen emails from the folder
-		
-			ids = mail.getUids( "unseen" )
-
-		else :
-
-			ids = mail.getUids( "all" )
-
-
-		out.uids = deepcopy( ids )		# Store the UIDs of the emails retrieived in the general output object
-
-
-		if len( ids ) > 0 :		# There has to be at least one email to fetch data or otherwise fetchHeaders will throw up an error
-
-
-			data = mail.fetchHeaders( ids, ['from', 'subject', 'date'] )
-	
-	
-			if account[ 'latestEmailFirst' ] :		# We define an anonymous function that modifies the order in which we access UIDs based on the configuration.
-	
-				ids.reverse()
-				out.uids.reverse()		# We must also flip the order in which the uids are stored so that the lines and uids match
-
-
-			if len(ids) > 100 :		# Get number of digits of total number of messages.
-	
-				numDigits = len( str( len(ids) ) )		# Used to get number of digits in the number for total number of messages. Crude Hack at best.
-			else :
-	
-				numDigits = 2
-
-			out.numDigits = numDigits		# Store the number of digits in the object related to the account
-
-
-			reFrom = re.compile( '\"?([^<]*?)\"? <.*' )
-
-			# We begin by scanning all of the the uids extracted and storing the information in the Output object 'out':
-
-			for uid in ids :
-
-				email = Email()		# Create a new Email object for insertion in out.emails
-
-				line = data[ uid ]
-
-				strFrom = ( '{:<30.30}' ).format( line[ 'from' ] )
-
-				m = reFrom.match( strFrom )
-
-				if m:
-					strFrom = m.group(1)
-
-				email.From = strFrom
-				email.Date = convertDate( line[ 'date' ] )
-				email.Subject = line[ 'subject' ]
-
-				out.emails.append( email )
-
-
-			# If we are dealing with all emails we may need additional information stored in 'out'
-
-			if not account[ 'showUnseen' ] :		# this means we are displaying ALL emails, seen and unseen
-
-				dicFlags = mail.fetchFlags( ids )
-
-				reSeen = re.compile( '.*Seen.*' )
-
-				for ii in range( len( ids ) ) :
-
-					m = reSeen.match( dicFlags[ ids[ ii ] ] )
-
-					if m :		# Flag has a Seen flag. We store that information in 'out'
-
-						out.emails[ ii ].Seen = True
-
-					else :
-						out.emails[ ii ].Seen = False
-
-	mail.logout()
-
-	return out		# Return the Output data structure we have just populated
-
-
 
 def display( out ) :
 
@@ -459,162 +334,6 @@ def display( out ) :
 				
 
 
-def urwidDisplay( servers ) :
-
-	import urwid
-	from miscClasses import strWidth as sW 
-
-	def exit( key ) :		# Exit urwid when q or Q is pressed
-
-		if key in ('q', 'Q') :
-
-			raise urwid.ExitMainLoop()
-	
-	palette = [
-		( 'title', 'yellow', 'dark blue' ),
-		( 'account', 'light red', 'black' ),
-		( 'bw', 'white', 'black' ),
-		( 'flag', 'dark green', 'black' ),
-		( 'date', 'brown', 'black' ),
-		( 'from', 'dark cyan', 'black' ),
-		( 'subject', 'dark green', 'black' ),
-		( 'subjectSeen', 'brown', 'black' ) ]
-
-
-#	title = urwid.AttrMap( urwid.Text( " FetchHeaders      q: Quit    a: Abort    d: Delete    u: UnDelete    j: Down    k: Up" ), 'title' )
-	title = urwid.AttrMap( urwid.Text( " FetchHeaders      q: Quit " ), 'title' )
-	
-	div = urwid.Divider()
-
-#	pileList = [ title, div, div ]
-	
-	titlePile = urwid.Pile( [title, div] )
-
-	emailList = []
-
-
-	for out in threadedExec( servers ) :
-
-		# Construct account line widget
-
-		account = urwid.Text( ( 'account', ' ' + out.settings[ 'name' ] + ':' ) )
-
-		if out.settings[ 'showNums' ] :			# Numbers are supposed to displayed after the account name
-
-			numbers = urwid.Text( ( 'bw', '( total: ' + str( out.numAll ) + ' | unseen: ' + str( out.numUnseen ) + ' )' ) ) 
-
-			accountLine = urwid.Columns( [ ( 'fixed', 13, account ), numbers ] )
-
-		else :			# Don't display numbers
-
-			accountLine = urwid.Columns( [ ( 'fixed', 13, account ) ] )
-
-
-#		pileList += [ accountLine, div ] 	# First line displays account name and number of messages
-
-		emailList += [ accountLine, div ] 	# First line displays account name and number of messages
-
-
-		# We now display the email headers
-
-		for ii in range( len( out.emails ) ) :
-
-			email = out.emails[ ii ]
-
-			date = urwid.Text( ( 'date', sW( email.Date, 17 ) ) )
-			From = urwid.Text( ( 'from', sW( email.From, 30 ) ) )
-			serial = urwid.Text( ( 'bw', sW( str(ii + 1), out.numDigits, align = '>' ) ) ) 
-			
-			if out.settings[ 'showUnseen' ] or (not email.Seen) :		# Show only unseen messages or show All message but current one is unseen
-
-				subject = urwid.Text( ( 'subject', sW( email.Subject, 120 ) ) )
-			
-			else:
-
-				subject = urwid.Text( ( 'subjectSeen', sW( email.Subject, 120 ) ) )
-
-
-			if showFlags :		# Flags are to be displayed
-
-				if email.Seen :
-
-					ch = " "
-
-				else :
-					ch = "N"
-
-				sep = [ ('fixed', 2, urwid.Text(( 'bw', " [" ))), ('fixed', 3, urwid.Text(( 'flag', ' ' + ch + ' ' ))), ('fixed', 4, urwid.Text(( 'bw', "]   " ))) ] 
-			
-			else :
-				sep = [ ( 'fixed', 3, urwid.Text(( 'bw', ".  " )) ) ]
-
-
-			lineList = [ ('fixed', out.numDigits, serial) ] + sep + [ ('fixed', 21, date ), ('fixed', 34, From), subject ]
-
-			line = urwid.Columns( lineList )
-
-#			pileList.append( line )
-
-			emailList.append( line )
-
-
-#		pileList += [div, div]			# Two empty lines after account ends
-
-		emailList += [div, div]			# Two empty lines after account ends
-
-
-#	pile = urwid.Pile( pileList )
-
-#	fill = urwid.Filler( pile, valign = 'top' )
-
-	listbox = urwid.ListBox( emailList )
-
-	frame = urwid.Frame( listbox, header = titlePile )
-
-#	loop = urwid.MainLoop( fill, palette, unhandled_input = exit )
-
-	loop = urwid.MainLoop( frame, palette, unhandled_input = exit )
-
-	loop.run()
-
-
-
-def threadedExec( servers ) :
-
-	'''
-	This implements the program using a threaded queue model
-	'''
-
-	from Queue import Queue
-
-	inQueue = Queue()	# Initiate and populate input queue with list of tasks (data for each task)
-
-	for account in servers :
-
-		inQueue.put( servers[ account ] )		# Store the account dictionary in inQueue. This denotes the data required for a single task: polling a single server
-
-	outQueue = Queue( maxsize = inQueue.qsize() )		# Prepare output queue for storing results
-
-	# Create a number of threads to parallelize the tasks. Threads created using the Worker class inherited from the threading.Thread class:
-	
-	from miscClasses import Worker		# import the inherited threading class
-
-
-	workers = [ Worker( pollAccount, inQueue, outQueue ) for ii in range( maxThreads ) ]		# maxThreads is a global variable that determines the maximum number of open threads
-
-	for worker in workers :
-
-		worker.start()		# Begun execution of the thread
-
-
-	inQueue.join()		# Pause program stepping forward here until all tasks in inQueue are completed
-
-	
-	while not outQueue.empty() :
-
-		yield outQueue.get()		# this wording makes test3() a generator and it should be used as such. test3 will return Buffer type objects from each server poll one at a time.
-
-
 
 def main() :
 
@@ -658,20 +377,17 @@ def main() :
 	applyGlobalSettings( globalSettings ) 		# Apply the global settings contained in the 'globalSettings' dictionary we created from the configuration file and command-line arguments
 
 
-	# Begin threaded execution of accessing accounts:
-
-	# What follows is the simplest possible output technique
-
-#	print 	# Start with empty line
-#
-#	for out in threadedExec( servers ) :
-#
-#		display( out )
-#		print( '\n' )		# Separate each account information with 3 lines
-
 	# This is the simplistic urwid implementation with no input control, just display:
 
-	urwidDisplay( servers )
+#	urwidDisplay( servers )
+	
+	from urwidDisplay import urwidDisplay
+
+	# Create instance of the imported class to create and start the urwid loop to display emails
+
+	settings = { 'maxThreads': maxThreads, 'showFlags': showFlags }
+
+	urwidDisplay( servers, settings )
 
 
 

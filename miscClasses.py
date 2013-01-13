@@ -10,6 +10,142 @@
 # This file contains the definitions of miscellaneous classes that are used by the fetchHeaders.py program.
 
 
+def pollAccount( account ) :
+
+	'''
+	This function accepts a dictionary associated with a SINGLE account (a particular email address on a particular imap server) and carries out all the actions required to connect with said account (poll it) and get email information AND display it.
+	'''
+
+	# Note: The way this function is currently constructed it produces no direct ouput to stdout but rather stores it in a buffer class object which it returns. The calling function decides when to display the information. This has been done to facilitate the parallelizing of polling of the accounts.
+
+	from imapServer import imapServer
+	import re
+#	from miscClasses import colorWidth as cW	# Custom function that sets width of text fields and colors it.
+	from copy import deepcopy
+
+	cW = colorWidth		# Rename function for easier typing and clarity
+
+
+	numUnseen = -1		# Set unequal to zero in case showNums = False
+
+
+	mail = imapServer( account['host'] )
+
+	mail.login( account['username'], account['password'] )
+
+	mail.examine()
+
+
+#	from miscClasses import Output
+#	from miscClasses import Email
+
+	out = Output( account )		# Create Output data structure for imminent population
+
+
+	
+	if account[ 'showNums' ] :
+
+		(numAll, numUnseen) = mail.numMsgs()
+
+		out.numAll = numAll		# Store numbers in output object
+		out.numUnseen = numUnseen
+
+
+	if not account[ 'showOnlyNums' ] :
+
+
+#		from miscClasses import convertDate		# Custom function that converts imap returned date string to the format required
+
+		if account[ 'showUnseen' ] :		# show only unseen emails from the folder
+		
+			ids = mail.getUids( "unseen" )
+
+		else :
+
+			ids = mail.getUids( "all" )
+
+
+		out.uids = deepcopy( ids )		# Store the UIDs of the emails retrieived in the general output object
+
+
+		if len( ids ) > 0 :		# There has to be at least one email to fetch data or otherwise fetchHeaders will throw up an error
+
+
+			data = mail.fetchHeaders( ids, ['from', 'subject', 'date'] )
+	
+	
+			if account[ 'latestEmailFirst' ] :		# We define an anonymous function that modifies the order in which we access UIDs based on the configuration.
+	
+				ids.reverse()
+				out.uids.reverse()		# We must also flip the order in which the uids are stored so that the lines and uids match
+
+
+			if len(ids) > 100 :		# Get number of digits of total number of messages.
+	
+				numDigits = len( str( len(ids) ) )		# Used to get number of digits in the number for total number of messages. Crude Hack at best.
+			else :
+	
+				numDigits = 2
+
+			out.numDigits = numDigits		# Store the number of digits in the object related to the account
+
+
+			reFrom = re.compile( '\"?([^<]*?)\"? <.*' )
+
+			# We begin by scanning all of the the uids extracted and storing the information in the Output object 'out':
+
+			for uid in ids :
+
+				email = Email()		# Create a new Email object for insertion in out.emails
+
+				line = data[ uid ]
+
+				strFrom = ( '{:<30.30}' ).format( line[ 'from' ] )
+
+				m = reFrom.match( strFrom )
+
+				if m:
+					strFrom = m.group(1)
+
+				email.From = strFrom
+				email.Date = convertDate( line[ 'date' ] )
+				email.Subject = line[ 'subject' ]
+
+				out.emails.append( email )
+
+
+			# If we are dealing with all emails we may need additional information stored in 'out'
+
+			if not account[ 'showUnseen' ] :		# this means we are displaying ALL emails, seen and unseen
+
+				dicFlags = mail.fetchFlags( ids )
+
+				reSeen = re.compile( '.*Seen.*' )
+
+				for ii in range( len( ids ) ) :
+
+					m = reSeen.match( dicFlags[ ids[ ii ] ] )
+
+					if m :		# Flag has a Seen flag. We store that information in 'out'
+
+						out.emails[ ii ].Seen = True
+
+					else :
+						out.emails[ ii ].Seen = False
+
+			else :		# We are displaying only unSeen messages
+
+				for ii in range( len( ids ) ) :
+
+					out.emails[ ii ].Seen = False		# Message is necessarily Unseen
+
+
+	mail.logout()
+
+	return out		# Return the Output data structure we have just populated
+
+
+
 
 import threading
 
@@ -69,6 +205,47 @@ class Worker( threading.Thread ) :
 class Email :		# Struct like object for storing information about a single email. Members can be created on the fly. Each Output object will contain a list of these.
 
 	subject = ''
+
+
+
+def threadedExec( servers, maxThreads ) :
+
+	'''
+	This implements the email account access part of the program using a threaded queue model
+
+	maxThreads in an INTEGER that denotes the maximum number of parallel threads that the program is allowed to open. This is a global setting.
+	'''
+
+	from Queue import Queue
+
+	inQueue = Queue()	# Initiate and populate input queue with list of tasks (data for each task)
+
+	for account in servers :
+
+		inQueue.put( servers[ account ] )		# Store the account dictionary in inQueue. This denotes the data required for a single task: polling a single server
+
+	outQueue = Queue( maxsize = inQueue.qsize() )		# Prepare output queue for storing results
+
+	# Create a number of threads to parallelize the tasks. Threads created using the Worker class inherited from the threading.Thread class:
+	
+#	from miscClasses import Worker		# import the inherited threading class
+
+
+	workers = [ Worker( pollAccount, inQueue, outQueue ) for ii in range( maxThreads ) ]		# maxThreads is a global variable that determines the maximum number of open threads
+
+	for worker in workers :
+
+		worker.start()		# Begun execution of the thread
+
+
+	inQueue.join()		# Pause program stepping forward here until all tasks in inQueue are completed
+
+	
+	while not outQueue.empty() :
+
+		yield outQueue.get()		# this wording makes test3() a generator and it should be used as such. test3 will return Buffer type objects from each server poll one at a time.
+
+
 
 
 
