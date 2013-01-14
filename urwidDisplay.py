@@ -56,7 +56,22 @@ class urwidDisplay() :
 			( 'F_date', 'yellow', focus_bg_color ),
 			( 'F_from', 'light cyan', focus_bg_color ),
 			( 'F_subject', 'light green', focus_bg_color ),
-			( 'F_subjectSeen', 'yellow', focus_bg_color ) ]
+			( 'F_subjectSeen', 'yellow', focus_bg_color ), 	
+									# We define the normal state flagged for Deletion scheme for the header. Note the 'D_' at the beginning of each name
+			( 'D_bw', 'dark red', normal_bg_color ),
+			( 'D_flag', 'dark red', normal_bg_color ),
+			( 'D_date', 'dark red', normal_bg_color ),
+			( 'D_from', 'dark red', normal_bg_color ),
+			( 'D_subject', 'dark red', normal_bg_color ),
+			( 'D_subjectSeen', 'dark red', normal_bg_color ),
+									# We define the focus state flagged for Deletion scheme for the header. Note the 'DF_' at the beginning of each name.
+			( 'DF_bw', 'dark red', focus_bg_color ),
+			( 'DF_flag', 'dark red', focus_bg_color ),
+			( 'DF_date', 'dark red', focus_bg_color ),
+			( 'DF_from', 'dark red', focus_bg_color ),
+			( 'DF_subject', 'dark red', focus_bg_color ),
+			( 'DF_subjectSeen', 'dark red', focus_bg_color ) ]	
+
 
 
 		self.title = urwid.AttrMap( urwid.Text( " FetchHeaders      q: Quit    a: Abort    d: Delete    u: UnDelete    j: Down    k: Up" ), 'title' )
@@ -102,6 +117,8 @@ class urwidDisplay() :
 			for ii in range( len( out.emails ) ) :
 	
 				email = out.emails[ ii ]
+
+				email.Delete = False		# Boolean Flag for tracking if email has to be deleted.
 
 				email.serial = ii + 1		# Serial Number associated with this email
 
@@ -169,6 +186,20 @@ class urwidDisplay() :
 			self.shiftFocus( self.focus + 1 )
 
 
+		if key in ( 'd', 'D' ) :		# Email in focus must be flagged for deletion
+
+			self.emails[ self.focus ].Delete = True		# Set Delete flag on focused email
+
+			self.shiftFocus( None )		# Call shiftFocus() to implement change in display status. 'None' is passed since the focus hasn't moved.
+
+
+		if key in ( 'u', 'U' ) :
+
+			self.emails[ self.focus ].Delete = False	# UnSet Delete flag on focused email
+
+			self.shiftFocus( None )
+
+
 
 	def shiftFocus( self, oldFocus ) :
 
@@ -183,12 +214,14 @@ class urwidDisplay() :
 		if self.focus >= self.total :  self.focus = 0			# Move around the circle and set focus to first email.
 
 
-		# First we unfocus the previously focussed email:
+		# First we unfocus the previously focussed email, if there is one.
 
-		email = self.emails[ oldFocus ]
+		if oldFocus != None :		# If 'None' has been passed in the focus hasn't changed position, for instance if the email is to be marked for deletion.
 
-		self.List[ email.listPos ] = self.constructLine( email, focus = False )
-
+			email = self.emails[ oldFocus ]
+	
+			self.List[ email.listPos ] = self.constructLine( email, focus = False )
+	
 
 		# Now implement change in focus.
 
@@ -226,9 +259,15 @@ class urwidDisplay() :
 		import urwid
 		from miscClasses import strWidth as sW
 		
-		if focus : pre = 'F_'		# This string determines which color from the palette is used: normal of focus scheme
+		if focus : pre = 'F_'		# This string determines which color from the palette is used: normal of focus scheme, flagged for deletion or not.
 
 		else : pre = ''
+
+		if email.Delete :
+
+			if focus: pre = 'DF_'		# Email is both flagged for deletion and in focus
+
+			else : pre = 'D_'		# Email is flagged for deletion
 
 
 		date = urwid.Text( ( pre + 'date', sW( email.Date, 17 ) ) )
@@ -249,12 +288,17 @@ class urwidDisplay() :
 
 			if email.Seen :
 
-				ch = " "
+				if email.Delete : ch = " D "
+
+				else : ch = "   "
 
 			else :
-				ch = "N"
+				if email.Delete : ch = " ND"
 
-			sep = [ ('fixed', 2, urwid.Text(( pre + 'bw', " [" ))), ('fixed', 3, urwid.Text(( pre + 'flag', ' ' + ch + ' ' ))), ('fixed', 4, urwid.Text(( pre + 'bw', "]   " ))) ] 
+				else : ch = " N "
+
+
+			sep = [ ('fixed', 2, urwid.Text(( pre + 'bw', " [" ))), ('fixed', 3, urwid.Text(( pre + 'flag', ch ))), ('fixed', 4, urwid.Text(( pre + 'bw', "]   " ))) ] 
 		
 		else :
 			sep = [ ( 'fixed', 3, urwid.Text(( pre + 'bw', ".  " )) ) ]
