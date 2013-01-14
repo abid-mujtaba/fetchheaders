@@ -348,8 +348,8 @@ def main() :
 	import os
 
 	homeFolder = os.getenv( "HOME" )	# Basically the value in $HOME
-#	packageFolder = '/usr/local/share/fetchheaders'		# Location of folder containing all package files
-	packageFolder = '.'
+	packageFolder = '/usr/local/share/fetchheaders'		# Location of folder containing all package files
+#	packageFolder = '.'
 
 	fileConf = homeFolder + '/.fetchheaders.conf'
 

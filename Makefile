@@ -20,7 +20,7 @@ CREATE_MANPAGE=1
 
 # A list of all the files in the application. These are the files that 'make' moves about
 
-scripts = fetchheaders.py miscClasses.py imapServer.py
+scripts = fetchheaders.py miscClasses.py imapServer.py urwidDisplay.py
 
 config = fetchheaders.conf
 
@@ -134,7 +134,7 @@ endif
 help:
 
 	@echo -e "\nOptions:" 
-	@echo -e "\n\tinstall - Installs the applications scripts and the configuration files unless the configuration files already exist in which case it DOES not over-write them."
+	@echo -e "\n\tinstall - Installs the applications scripts and the configuration files unless the configuration files already exist in which case it DOES not over-write them. Run as root."
 	@echo -e "\n\tuninstall - Remove application scripts, binary and manpage. Leave the configuration files. Run as root."
 	@echo -e "\n\tpurge - Remove ALL application files and folders including the configuration file. Run as root."
 	@echo -e "\n\tconfig - Install the configuration file, over-writing existing one. Use to create clean configuration file."
