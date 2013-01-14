@@ -28,7 +28,6 @@ class urwidDisplay() :
 		# Import the necessary modules and functions:
 
 		import urwid
-#		from miscClasses import strWidth as sW
 		from miscClasses import threadedExec		# This function implements email account access using threads
 
 
@@ -51,18 +50,25 @@ class urwidDisplay() :
 			( 'from', 'dark cyan', normal_bg_color ),
 			( 'subject', 'dark green', normal_bg_color ),
 			( 'subjectSeen', 'brown', normal_bg_color ),
+									# We define the 'focus' state color scheme for various parts of the header. Note the 'F_' at the beginning of each name
+			( 'F_bw', 'white', focus_bg_color ) ,		# Black and White text when focussed
+			( 'F_flag', 'light green', focus_bg_color ),	
+			( 'F_date', 'yellow', focus_bg_color ),
+			( 'F_from', 'light cyan', focus_bg_color ),
+			( 'F_subject', 'light green', focus_bg_color ),
+			( 'F_subjectSeen', 'yellow', focus_bg_color ) ]
 
-			( 'F_flag', 'dark green', focus_bg_color ),	# We define the 'focus' state color scheme for various parts of the header. Note the 'F_' at the beginning of each name
-			( 'F_date', 'brown', focus_bg_color ),
-			( 'F_from', 'dark cyan', focus_bg_color ),
-			( 'F_subject', 'dark green', focus_bg_color ),
-			( 'F_subjectSeen', 'brown', focus_bg_color ) ]
 
 		self.title = urwid.AttrMap( urwid.Text( " FetchHeaders      q: Quit    a: Abort    d: Delete    u: UnDelete    j: Down    k: Up" ), 'title' )
 
 		self.div = urwid.Divider()
 
 		self.titlePile = urwid.Pile( [ self.title, self.div ] )
+
+
+		self.emails = []		# This is a list which will contain the emails whose headers have been displayed. We will use it when shifting focus and marking for deletion.
+
+		self.focus = -1			# Initially no header has focus. This is donated by the value -1. 0 will donate the first header corresponding to self.emails[0].
 
 		
 		self.List = []		# This is the list of objects that will be used to construct the main listbox that displays all email headers and auxiliary information. 
@@ -101,6 +107,10 @@ class urwidDisplay() :
 
 				email.numDigits = out.numDigits		# No. of digits for displaying serial number, calculated by analyzing the number of emails for this particular account
 
+				email.listPos = len( self.List )	# Store the position of the email header urwid object (urwid.Columns) in self.List. Will need it for focusing or deletion.
+
+				self.emails.append( email )		# Add the displayed email to the self.emails list
+
 
 				line = self.constructLine( email, focus = False )
 
@@ -110,6 +120,9 @@ class urwidDisplay() :
 
 
 			self.List += [ self.div, self.div ] 		# Add two empty lines after account ends
+
+
+		self.total = len( self.emails )		# Total no. of emails being displayed
 
 
 		# All account information has been input and the urwid display is almost ready:
@@ -142,10 +155,54 @@ class urwidDisplay() :
 			raise urwid.ExitMainLoop()
 
 
+		if key in ( 'j', 'J' ) :		# This pushes focus down
+
+			self.focus += 1
+
+			self.shiftFocus( self.focus - 1 )		# Call the shiftFocus() method to implement the change in focus. We need to pass it the last focus so that it can be unfocussed.
 
 
-	
-#	def constructLine( self, email, serialNum, numDigits, showUnseen, showFlags, focus = False ) :
+		if key in ( 'k', 'K' ) :		# This pushes the focus up
+
+			self.focus -= 1
+
+			self.shiftFocus( self.focus + 1 )
+
+
+
+	def shiftFocus( self, oldFocus ) :
+
+		'''
+		This method/function is called whenever the focus shifts. It implements said change.
+		'''
+
+		# The first step is to check whether the focus is out of bounds or not.
+
+		if self.focus < 0 :  self.focus = self.total - 1		# Treat emails in a circular data structure. We set focus to the last email.
+
+		if self.focus >= self.total :  self.focus = 0			# Move around the circle and set focus to first email.
+
+
+		# First we unfocus the previously focussed email:
+
+		email = self.emails[ oldFocus ]
+
+		self.List[ email.listPos ] = self.constructLine( email, focus = False )
+
+
+		# Now implement change in focus.
+
+		email = self.emails[ self.focus ]		# We select the email object associated with the new focus
+
+		self.List[ email.listPos ] = self.constructLine( email, focus = True )
+
+
+		# Finally change listbox focus so that the listbox scrolls properly with our scrolling:
+
+		self.listbox.set_focus( email.listPos )
+
+
+
 
 
 	def constructLine( self, email, focus = False ) :
@@ -176,9 +233,8 @@ class urwidDisplay() :
 
 		date = urwid.Text( ( pre + 'date', sW( email.Date, 17 ) ) )
 		From = urwid.Text( ( pre + 'from', sW( email.From, 30 ) ) )
-		serial = urwid.Text( ( 'bw', sW( str( email.serial ), email.numDigits, align = '>' ) ) ) 
+		serial = urwid.Text( ( pre + 'bw', sW( str( email.serial ), email.numDigits, align = '>' ) ) ) 
 		
-#		if self.settings[ 'showUnseen' ] or (not email.Seen) :		# Show only unseen messages or show All message but current one is unseen
 
 		if not email.Seen :		# If email is unseen then:
 
@@ -198,13 +254,15 @@ class urwidDisplay() :
 			else :
 				ch = "N"
 
-			sep = [ ('fixed', 2, urwid.Text(( 'bw', " [" ))), ('fixed', 3, urwid.Text(( pre + 'flag', ' ' + ch + ' ' ))), ('fixed', 4, urwid.Text(( 'bw', "]   " ))) ] 
+			sep = [ ('fixed', 2, urwid.Text(( pre + 'bw', " [" ))), ('fixed', 3, urwid.Text(( pre + 'flag', ' ' + ch + ' ' ))), ('fixed', 4, urwid.Text(( pre + 'bw', "]   " ))) ] 
 		
 		else :
-			sep = [ ( 'fixed', 3, urwid.Text(( 'bw', ".  " )) ) ]
+			sep = [ ( 'fixed', 3, urwid.Text(( pre + 'bw', ".  " )) ) ]
 
 
 		lineList = [ ('fixed', email.numDigits, serial) ] + sep + [ ('fixed', 21, date ), ('fixed', 34, From), subject ]
 
+		
+		line = urwid.AttrMap( urwid.Columns( lineList ), pre + 'bw' )		# Applying the AttrMap here ensures the whole line gets the same background color
 
-		return urwid.Columns( lineList )		# Return the constructed line
+		return line		# Return the constructed line
