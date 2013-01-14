@@ -33,6 +33,8 @@ class urwidDisplay() :
 
 		self.settings = settings		# Store the settings (mostly global for the program) locally in a dictionary
 
+		self.servers = servers			# This wealth of information will come in handy when we will be deleting emails
+
 
 		# Define the palette that will be used by urwid. Note that is defined to be a member of the urwidDisplay class as all objects will be
 
@@ -214,8 +216,10 @@ class urwidDisplay() :
 		'''
 		This method/function deletes all emails that have been flagged for deletion and then exits the program.
 		'''
+		
+		import urwid
 
-#		fout = open( 'output.txt', 'w' )
+		self.title = urwid.AttrMap( urwid.Text( " FetchHeaders   -   Deleting Emails and Exiting." ), 'title' )
 
 		# The first step is to scan self.emails and find the emails flagged for deletion. We collect them in a single data structure:
 
@@ -230,6 +234,30 @@ class urwidDisplay() :
 					delete[ email.account ] = []		# Empty list created to hold uids of emails flagged for deletion
 
 				delete[ email.account ].append( email.uid )
+
+
+		# Now we delete the specified emails by logging in to the various accounts:
+
+		for name in delete.keys() :		# 'name' contains the name of the account
+
+			account = self.servers[ name ]
+
+			from imapServer import imapServer
+
+			mail = imapServer( account['host'] )
+
+			mail.login( account['username'], account['password'] )
+
+			mail.select()
+
+			# Now we have accessed the proper folder:
+
+			mail.delete( delete[ name ] )		# Provide mail.delete with list of UIDs. The method flags the emails for deletion on the IMAP server.
+
+			mail.expunge()			# This tells the IMAP server to actually delete the emails flagged as such
+
+			mail.logout()			# Logout gracefully from the account
+
 
 
 #				fout.write( email.account + '   ' + email.uid + '    ' + email.Date + '  ' + email.From + '  ' + email.Subject + '\n' )
