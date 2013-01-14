@@ -118,6 +118,8 @@ class urwidDisplay() :
 	
 				email = out.emails[ ii ]
 
+				email.account = out.settings[ 'name' ]		# Store name of account associated with each email
+
 				email.Delete = False		# Boolean Flag for tracking if email has to be deleted.
 
 				email.serial = ii + 1		# Serial Number associated with this email
@@ -167,7 +169,7 @@ class urwidDisplay() :
 		import urwid
 
 
-		if key in ( 'a', 'A' ) :		# Exit loop without making any changes when the 'A' key is pressed (in any case) 
+		if key in ( 'a', 'A' ) :		# Exit loop without making any changes (NO Deletions) when the 'A' key is pressed (in any case) 
 
 			raise urwid.ExitMainLoop()
 
@@ -198,6 +200,50 @@ class urwidDisplay() :
 			self.emails[ self.focus ].Delete = False	# UnSet Delete flag on focused email
 
 			self.shiftFocus( None )
+
+
+		if key in ( 'q', 'Q' ) :
+
+			self.quit()		# Call the quit() method/function to delete flagged emails and exit the program
+
+
+
+	
+	def quit( self ) :
+
+		'''
+		This method/function deletes all emails that have been flagged for deletion and then exits the program.
+		'''
+
+#		fout = open( 'output.txt', 'w' )
+
+		# The first step is to scan self.emails and find the emails flagged for deletion. We collect them in a single data structure:
+
+		delete = {}
+
+		for email in self.emails :
+
+			if email.Delete :		# Email is marked for deletion
+
+				if not email.account in delete.keys() :		# Checking if the account exists in the 'delete' dictionary as a key. If not it must be created as an empty list
+
+					delete[ email.account ] = []		# Empty list created to hold uids of emails flagged for deletion
+
+				delete[ email.account ].append( email.uid )
+
+
+#				fout.write( email.account + '   ' + email.uid + '    ' + email.Date + '  ' + email.From + '  ' + email.Subject + '\n' )
+
+#		fout.write( '\n\n' )
+#		fout.write( str( delete ) )
+#
+#		fout.close()
+
+
+		import urwid
+
+		raise urwid.ExitMainLoop()
+
 
 
 

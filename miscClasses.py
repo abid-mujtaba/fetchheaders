@@ -20,7 +20,6 @@ def pollAccount( account ) :
 
 	from imapServer import imapServer
 	import re
-#	from miscClasses import colorWidth as cW	# Custom function that sets width of text fields and colors it.
 	from copy import deepcopy
 
 	cW = colorWidth		# Rename function for easier typing and clarity
@@ -36,9 +35,6 @@ def pollAccount( account ) :
 	mail.examine()
 
 
-#	from miscClasses import Output
-#	from miscClasses import Email
-
 	out = Output( account )		# Create Output data structure for imminent population
 
 
@@ -53,8 +49,6 @@ def pollAccount( account ) :
 
 	if not account[ 'showOnlyNums' ] :
 
-
-#		from miscClasses import convertDate		# Custom function that converts imap returned date string to the format required
 
 		if account[ 'showUnseen' ] :		# show only unseen emails from the folder
 		
@@ -110,6 +104,8 @@ def pollAccount( account ) :
 				email.From = strFrom
 				email.Date = convertDate( line[ 'date' ] )
 				email.Subject = line[ 'subject' ]
+
+				email.uid = uid		# Store the email's uid along with it for later usage
 
 				out.emails.append( email )
 
