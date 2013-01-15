@@ -68,11 +68,14 @@ ifeq ($(CREATE_MANPAGE),1)
 
 endif
 
-# Create symbolic link to the fetchheaders main script
+# Check if it exists and if not, create symbolic link to the fetchheaders main script
 
-	@ln -s $(PACKAGE_LOCATION)/fetchheaders.py $(BIN_LOCATION)/fetchheaders
-
-	@echo -e "\nln -s $(PACKAGE_LOCATION)/fetchheaders.py $(BIN_LOCATION)/fetchheaders"
+	@if [ ! -f $(BIN_LOCATION)/fetchheaders ]; then \
+	\
+		ln -s $(PACKAGE_LOCATION)/fetchheaders.py $(BIN_LOCATION)/fetchheaders ; \
+		echo -e "\nln -s $(PACKAGE_LOCATION)/fetchheaders.py $(BIN_LOCATION)/fetchheaders" ; \
+	\
+	fi ;
 
 
 

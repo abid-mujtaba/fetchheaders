@@ -194,14 +194,22 @@ class urwidDisplay() :
 
 			self.emails[ self.focus ].Delete = True		# Set Delete flag on focused email
 
-			self.shiftFocus( None )		# Call shiftFocus() to implement change in display status. 'None' is passed since the focus hasn't moved.
+			# Shift focus forward (down) by one to move to the next email
+
+			self.focus += 1
+
+			self.shiftFocus( self.focus - 1 )		# Call shiftFocus() to implement change in display status. 'None' is passed since the focus hasn't moved.
 
 
 		if key in ( 'u', 'U' ) :
 
 			self.emails[ self.focus ].Delete = False	# UnSet Delete flag on focused email
 
-			self.shiftFocus( None )
+			# Shift focus forward (down) by one to move to the next email
+
+			self.focus += 1
+
+			self.shiftFocus( self.focus - 1 )
 
 
 		if key in ( 'q', 'Q' ) :
@@ -258,17 +266,6 @@ class urwidDisplay() :
 
 			mail.logout()			# Logout gracefully from the account
 
-
-
-#				fout.write( email.account + '   ' + email.uid + '    ' + email.Date + '  ' + email.From + '  ' + email.Subject + '\n' )
-
-#		fout.write( '\n\n' )
-#		fout.write( str( delete ) )
-#
-#		fout.close()
-
-
-		import urwid
 
 		raise urwid.ExitMainLoop()
 

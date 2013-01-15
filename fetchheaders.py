@@ -210,6 +210,9 @@ def applyArgs( args, servers, globalSettings ) :
 		for account in servers.keys() :
 
 			servers[ account ][ 'showUnseen' ] = False
+			
+		
+		globalSettings[ 'showFlags' ] = True		# Flags are shown by default whenever ALL emails are viewed whether --showFlags is passed or not.
 	
 
 	# --oldestFirst. Show oldest email first i.e. in chronological order.
