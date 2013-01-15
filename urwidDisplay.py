@@ -250,6 +250,11 @@ class urwidDisplay() :
 
 			account = self.servers[ name ]
 
+			trashFolder = account[ 'trashFolder' ]		# Get name of Trash Folder associated with specified account
+
+			flagDeleteEmails = account[ 'deleteEmails' ]		# Get boolean flag which indicates whether emails actually need to be physically deleted, or just copied.
+
+
 			from imapServer import imapServer
 
 			mail = imapServer( account['host'] )
@@ -260,9 +265,17 @@ class urwidDisplay() :
 
 			# Now we have accessed the proper folder:
 
-			mail.delete( delete[ name ] )		# Provide mail.delete with list of UIDs. The method flags the emails for deletion on the IMAP server.
+			# First we copy the emails to the Trash folder:
 
-			mail.expunge()			# This tells the IMAP server to actually delete the emails flagged as such
+			mail.copy( delete[name], trashFolder )		# We send the list of UIDs and the name of the trash folder to mail.copy() so that these emails can be copied in to the Trash Folder
+
+
+			if flagDeleteEmails :			# If the account setting indicates that emails are to be deleted after copying. Set to False for Gmail accounts.
+
+				mail.delete( delete[ name ] )		# Provide mail.delete with list of UIDs. The method flags the emails for deletion on the IMAP server.
+	
+				mail.expunge()			# This tells the IMAP server to actually delete the emails flagged as such
+
 
 			mail.logout()			# Logout gracefully from the account
 

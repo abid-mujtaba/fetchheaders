@@ -261,13 +261,13 @@ class imapServer: 	# This class implements all the functionality we need from th
 
 		output = {}	# Create empty dictionary
 
-		try:
+		try :
 			data = self.mail.uid( 'fetch', ','.join( lstUIDs ), 'flags' )[1]
 
-		except:
+		except :
 			print( 'Unable to fetch flags for specified emails.' )
 
-		else:
+		else :
 			import re
 
 			for item in data :
@@ -290,11 +290,25 @@ class imapServer: 	# This class implements all the functionality we need from th
 		The standard request to get just 'From' and 'Subject' fields is to use strFetch = '(BODY[HEADER.FIELDS (from subject)])'
 		'''
 
-		try:
+		try :
 			return self.mail.uid( 'fetch', ','.join( lstUIDs ), strFetch )[1]
 		
-		except:
+		except :
 			print( 'Unable to fetch (raw) fields for emails from folder ' + self.folder )
+
+	
+
+	def copy( self, lstUIDs, folder ) :
+
+		'''
+		Method copyies the emails specified by list 'lstUIDs' to the specified folder (a string). This method will work with EXAMINE as well as SELECT.
+		'''
+
+		try :
+			self.mail.uid( 'copy', ','.join( lstUIDs ), folder )
+
+		except :
+			print( 'Unable to copy specified emails to folder ' + folder + '.' )
 
 
 
@@ -307,10 +321,10 @@ class imapServer: 	# This class implements all the functionality we need from th
 		Note: The emails won't actually be deleted until the .logout or .expunge method is called.
 		'''
 
-		try:
+		try :
 			self.mail.uid( 'STORE', ','.join( lstUIDs ), '+FLAGS', '(\Deleted)' )		# The command wouldn't work without putting some of the strings in all caps
 
-		except:
+		except :
 			print( 'Unable to set \Deleted flags on specified emails.' )
 
 
@@ -340,7 +354,7 @@ def _substring( pattern, string ) :
 	if m:				# Match was succesful
 		return m.group(1)
 
-	else:
+	else :
 		return None
 
 

@@ -18,6 +18,8 @@
 	latestEmailFirst = boolean( default = True )
 	showNums = boolean( default = True )
 	showOnlyNums = boolean( default = False )
+	trashFolder = string( default = 'Trash' )
+	deleteEmails = boolean( default = True )
 
 
 [global]
