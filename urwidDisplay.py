@@ -214,21 +214,23 @@ class urwidDisplay() :
 
 		if key in ( 'q', 'Q' ) :
 
+			self.titlePile[0].set_text( " FetchHeaders   -   Deleting Emails and Exiting." )		# Change title to indicate process.
+
+			self.loop.draw_screen()		# Force redraw so that the title changes
+
 			self.quit()		# Call the quit() method/function to delete flagged emails and exit the program
 
 
 
-	
+
 	def quit( self ) :
 
 		'''
 		This method/function deletes all emails that have been flagged for deletion and then exits the program.
 		'''
-		
+
 		import urwid
-
-		self.title = urwid.AttrMap( urwid.Text( " FetchHeaders   -   Deleting Emails and Exiting." ), 'title' )
-
+		
 		# The first step is to scan self.emails and find the emails flagged for deletion. We collect them in a single data structure:
 
 		delete = {}
