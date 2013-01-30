@@ -130,7 +130,15 @@ def argParse() :
 
 	parser.add_argument( "-c", "--config", help = "Specify the name and path to the configuration file. If not specified the program will use the default configuration file in $HOME/.fetchheaders/fetchheaders.conf. Note: The configuration specification file (fetchheaders.conf.spec) should not be altered casually and the program will only look for it in $HOME/.fetchheaders/" )
 
-	parser.add_argument( "-a", "--accounts", help = "Specify the names of IMAP accounts to be polled as a comma-separated list. e.g. -a Gmail,Hotmail. Only accounts specified in the configuration file are allowed." )
+
+	# For --accounts and --exclude which we wish to be mutually exclusive optional arguments we create a mutually exclusive group within the parser to hold them.
+	group = parser.add_mutually_exclusive_group()
+
+
+	group.add_argument( "-a", "--accounts", help = "Specify the names of IMAP accounts to be polled as a comma-separated list. e.g. -a Gmail,Hotmail. Only accounts specified in the configuration file are allowed." )
+
+	group.add_argument( "-x", "--exclude", help = "Specify the names of the IMAP accounts which are NOT to be polled, as a comma-separated list. e.g. -x Gmail,Hotmail. Only accounts specified in the configuration file are allowed to be excluded." )
+
 
 	parser.add_argument( "-n", "--numsonly", help = "Flag: Only show the number of unseen and total number of messages for the specified folder for each account.", action = "store_true" )
 
@@ -166,7 +174,7 @@ def applyArgs( args, servers, globalSettings ) :
 
 	if args.accounts :	# True if -a or --accounts has been specified
 		
-		# We must perform some error checking on the arguments passed to the --acounts optional argument
+		# We must perform some error checking on the arguments passed to the --accounts optional argument
 
 		newServers = {}		# Create a new dictionary we will populate ONLY with the specified accounts
 
@@ -185,6 +193,47 @@ def applyArgs( args, servers, globalSettings ) :
 				newServers[ item ] = servers[ item ]
 
 		servers = newServers
+
+
+	# -x, --exclude. Does NOT poll the accounts specified with this argument:
+
+	if args.exclude :	# True if -x or --exclude has been specified
+
+		# We must perform some error checking on the arguments passed to the --exclude optional argument
+
+		excludedAccounts = []		# Empty list which we will populate with the excluded accounts
+
+		newServers = {}		# Empty dictionary with which we will construct the new 'servers' dictionary without the excluded accounts
+
+		for item in args.exclude.split( ',' ) :		# We are expecting a comma-separated list
+
+			if not item in servers.keys() :		# If this item in the comma-separated list is NOT an account specified in the configuration file
+
+				print( '\nError: ' + item + ' is not a vlid IMAP account name specified in the configuration file.' )
+
+				import sys
+
+				sys.exit(1)
+
+			else :
+
+				excludedAccounts.append( item )
+
+
+		# Now we remove the excluded accounts when we create the new 'servers' dictionary:
+
+		for account in servers.keys() :
+
+			if not account in excludedAccounts :		# The current account is not in the excluded list and so can be added to the servers dictionary:
+
+				newServers[ account ] = servers[ account ]
+
+
+		# Place the newly constructed dicionary (with accounts excluded) in to the original 'servers' dictionary:
+
+		servers = newServers
+
+
 
 	
 	# -n, --numsonly. If specified only the total and unseen number of messages is to be displayed. Similar to 'fetchmail -c'.
