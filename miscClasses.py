@@ -143,6 +143,52 @@ def pollAccount( account ) :
 
 
 
+def deleteEmails( account, listUIDs ) :
+
+	'''
+	This function deletes specified emails from a single account. It is meant to be called by a multi-thread execution routine for each account required.
+	
+	account: <DICTIONARY> Contains the settings associated with a particular account. Used to login to said account.
+
+	listUIDs: <LIST> of <INTEGERS>. Contains the UIDs of the emails that are to be deleted from the specified account.
+	'''
+
+
+	trashFolder = account[ 'trashFolder' ]		# Get name of Trash Folder associated with specified account
+
+	flagDeleteEmails = account[ 'deleteEmails' ]		# Get boolean flag which indicates whether emails actually need to be physically deleted, or just copied.
+
+
+	from imapServer import imapServer
+
+	mail = imapServer( account['host'] )
+
+	mail.login( account['username'], account['password'] )
+
+	mail.select()
+
+	# Now we have accessed the proper folder:
+
+	# First we copy the emails to the Trash folder:
+
+	mail.copy( listUIDs, trashFolder )		# We send the list of UIDs and the name of the trash folder to mail.copy() so that these emails can be copied in to the Trash Folder
+
+
+	if flagDeleteEmails :			# If the account setting indicates that emails are to be deleted after copying. Set to False for Gmail accounts.
+
+		mail.delete( listUIDs )		# Provide mail.delete with list of UIDs. The method flags the emails for deletion on the IMAP server.
+
+		mail.expunge()			# This tells the IMAP server to actually delete the emails flagged as such
+
+
+	mail.logout()			# Logout gracefully from the account
+
+	
+	
+
+
+
+
 import threading
 
 class Worker( threading.Thread ) :
@@ -194,6 +240,60 @@ class Worker( threading.Thread ) :
 			self.outQueue.put( result )		# Store the result in the outQueue
 
 			self.inQueue.task_done()		# Indicates to the inQueue that one of the tasks pulled from the queue has now been completed. This allows the Queue's .join() method to stop blocking when all tasks have been completed.
+
+
+
+
+class delWorker( threading.Thread ) :
+
+	'''
+	This is a class that implements a multi-threaded paradigm based on a single queue and a function that needs to be applied to said objects. No output is produced.
+
+	This is a custom implementation with the class repsonsible for taking objects from the inQueue, splitting off into two parts and passing these parts to the appropriate function.
+
+	The purpose of each worker is to read accounts and UID lists from the inQueue and call the deleteEmails() function upon them.
+	'''
+
+	def __init__( self, inQueue ) :
+
+		'''
+		inQueue: <Queue Object> Contains dictionaries, each with two parts: 'account' <DIC> associated with each email account and 'listUIDs' list of UIDs of emails to be deleted.
+		'''
+
+		self.function = deleteEmails		# Store the above defined deleteEmails as the function to be applied. This takes in two parameters: dictionary of account settings and list of UIDs.
+
+		self.inQueue = inQueue
+
+		# After having performed customized start up we call the .__ini__() script of the parent class (threading.Thread) to carry out tasks necessary for setting up threading.
+
+		super( delWorker, self ).__init__()
+	
+
+
+	def run( self ) :
+
+		'''
+		Overloaded run() method which implements the single queue thread paradigm.
+		'''
+
+		while True :
+
+			if self.inQueue.empty() :		# No more tasks left in queue. The delWorker should cease execution of tasks
+
+				break
+
+
+			data = self.inQueue.get()		# Extract data for task from inQueue
+	
+			self.function( data[ 'account' ], data[ 'listUIDs' ] )		# Perform task using data and the function associated with the task. In this case delete specified emails from specified account
+	
+	
+			self.inQueue.task_done()		# Inform the inQueue that an extracted task has been completed. This allows the inQueue to know when all tasks have been completed.
+
+
+			
+
+
 
 
 

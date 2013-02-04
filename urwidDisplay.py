@@ -22,7 +22,7 @@ class urwidDisplay() :
 		'''
 		This is the actionable part of the class and is responsible for initializing the class objects, implementing the urwid display and executing the main loop. 'servers' is an object which contains all the necessary information for logging in to the email accounts and extracting headers.
 
-		maxThreads: Max. number of simulatneous threads that the program is allowed to open. A global setting.
+		settings: <DIC> containing the global settings associated with the program
 		'''
 
 		# Import the necessary modules and functions:
@@ -246,40 +246,71 @@ class urwidDisplay() :
 				delete[ email.account ].append( email.uid )
 
 
-		# Now we delete the specified emails by logging in to the various accounts:
+		# If any emails have been specified for deletion we continue:
 
-		for name in delete.keys() :		# 'name' contains the name of the account
+		if delete :		# One True if the <DIC> is non-empty
 
-			account = self.servers[ name ]
-
-			trashFolder = account[ 'trashFolder' ]		# Get name of Trash Folder associated with specified account
-
-			flagDeleteEmails = account[ 'deleteEmails' ]		# Get boolean flag which indicates whether emails actually need to be physically deleted, or just copied.
-
-
-			from imapServer import imapServer
-
-			mail = imapServer( account['host'] )
-
-			mail.login( account['username'], account['password'] )
-
-			mail.select()
-
-			# Now we have accessed the proper folder:
-
-			# First we copy the emails to the Trash folder:
-
-			mail.copy( delete[name], trashFolder )		# We send the list of UIDs and the name of the trash folder to mail.copy() so that these emails can be copied in to the Trash Folder
-
-
-			if flagDeleteEmails :			# If the account setting indicates that emails are to be deleted after copying. Set to False for Gmail accounts.
-
-				mail.delete( delete[ name ] )		# Provide mail.delete with list of UIDs. The method flags the emails for deletion on the IMAP server.
+			# Now we delete the specified emails by logging in to the various accounts in a threaded fashion:
 	
-				mail.expunge()			# This tells the IMAP server to actually delete the emails flagged as such
+			from Queue import Queue
+	
+			inQueue = Queue()
+	
+	
+			# Populate Queue with task data
+	
+			for name in delete.keys() :
+	
+				inQueue.put( { 'account': self.servers[ name ], 'listUIDs': delete[ name ] } )		# Add <DIC> containing account settings and UIDs of emails to be deleted.
+	
+			
+			# Create a number of threads to parallelize the task:
+	
+			from miscClasses import delWorker
+	
+			workers = [ delWorker( inQueue ) for ii in range( self.settings[ 'maxThreads' ] ) ]
+	
+			
+			for worker in workers :
+	
+				worker.start()		# Begin execution of each thread
+	
+	
+			inQueue.join()		# Pause program execution here until all tasks in inQueue are complete
 
 
-			mail.logout()			# Logout gracefully from the account
+#		for name in delete.keys() :		# 'name' contains the name of the account
+#
+#			account = self.servers[ name ]
+#
+#			trashFolder = account[ 'trashFolder' ]		# Get name of Trash Folder associated with specified account
+#
+#			flagDeleteEmails = account[ 'deleteEmails' ]		# Get boolean flag which indicates whether emails actually need to be physically deleted, or just copied.
+#
+#
+#			from imapServer import imapServer
+#
+#			mail = imapServer( account['host'] )
+#
+#			mail.login( account['username'], account['password'] )
+#
+#			mail.select()
+#
+#			# Now we have accessed the proper folder:
+#
+#			# First we copy the emails to the Trash folder:
+#
+#			mail.copy( delete[name], trashFolder )		# We send the list of UIDs and the name of the trash folder to mail.copy() so that these emails can be copied in to the Trash Folder
+#
+#
+#			if flagDeleteEmails :			# If the account setting indicates that emails are to be deleted after copying. Set to False for Gmail accounts.
+#
+#				mail.delete( delete[ name ] )		# Provide mail.delete with list of UIDs. The method flags the emails for deletion on the IMAP server.
+#	
+#				mail.expunge()			# This tells the IMAP server to actually delete the emails flagged as such
+#
+#
+#			mail.logout()			# Logout gracefully from the account
 
 
 		raise urwid.ExitMainLoop()

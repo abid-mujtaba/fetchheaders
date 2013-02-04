@@ -401,6 +401,7 @@ def main() :
 
 	homeFolder = os.getenv( "HOME" )	# Basically the value in $HOME
 	packageFolder = '/usr/local/share/fetchheaders'		# Location of folder containing all package files
+
 #	packageFolder = '.'
 
 	fileConf = homeFolder + '/.fetchheaders.conf'
@@ -429,10 +430,9 @@ def main() :
 	applyGlobalSettings( globalSettings ) 		# Apply the global settings contained in the 'globalSettings' dictionary we created from the configuration file and command-line arguments
 
 
-	# This is the simplistic urwid implementation with no input control, just display:
 
-#	urwidDisplay( servers )
-	
+	# Use urwid to display the results, interact with the display and possibly flag messages for deletion:
+
 	from urwidDisplay import urwidDisplay
 
 	# Create instance of the imported class to create and start the urwid loop to display emails
