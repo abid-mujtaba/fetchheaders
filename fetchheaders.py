@@ -12,6 +12,9 @@
 # 
 # This script is intended as a program that reads a configuration file and uses the information stored there-in to connect to a variety of IMAP servers and display header information about the emails in various folders (INBOX by default). It also has the capability of deleting selected emails. The advantage is that minimal information needs to be downloaded (i.e. only certain header fields) without needing to download the entire email and one can choose to delete unnecessary emails judging by the sender and/or subject only.
 
+# Enable Python 3.x style print function:
+
+from __future__ import print_function
 
 # Create global variables that implement global settings which are used by the following functions.
 
@@ -44,7 +47,7 @@ def setOptions( configFile, configSpecFile ) :
 
 	except (ConfigObjError, IOError), e:
 		
-		print 'Could not read "%s": %s' % (configFile, e)
+		print( 'Could not read "%s": %s' % (configFile, e) )
 
 	
 	validator = Validator()
@@ -58,11 +61,11 @@ def setOptions( configFile, configSpecFile ) :
 
 			if key is not None :
 
-				print 'The "%s" key in the section "%s" failed validation' % (key, ','.join( section_list ) )
+				print( 'The "%s" key in the section "%s" failed validation' % (key, ','.join( section_list ) ) )
 
 			else :
 	
-				print 'The following section was missing: %s' % ','.join( section_list )
+				print( 'The following section was missing: %s' % ','.join( section_list ) )
 
 		import sys
 
@@ -151,6 +154,8 @@ def argParse() :
 	parser.add_argument( "--showFlags", help = "Flag: Show mutt-style flags (in square brackets) to indicate new/unseen and deleted emails when ALL emails are displayed (i.e. -A is issued).", action = "store_true" )
 
 	parser.add_argument( "-t", "--threads", help = "Specify the maximum number of parallel threads the program will use to simultaneously access IMAP servers. Set to 1 for serial (non-parallel) behaviour.", type = int)
+
+	parser.add_argument( "-T", "--terminal", help = "Flag: Show results in the terminal. Do NOT use urwid.", action = "store_true" )
 
 
 	# Begin reading in arguments and validate them:
@@ -243,6 +248,15 @@ def applyArgs( args, servers, globalSettings ) :
 		for account in servers.keys() :
 
 			servers[ account ][ 'showOnlyNums' ] = True
+	
+
+	# -T, --terminal. If specified the output is displayed on the terminal (stdout) and 'urwid' is NOT used.
+
+	if args.terminal:
+
+		globalSettings[ 'terminal' ] = True
+
+	else :	globalSettings[ 'terminal' ] = False
 
 
 	# --no-color. If specified the output of the program should NOT be colored.
@@ -338,14 +352,13 @@ def display( out ) :
 
 	from miscClasses import colorWidth as cW	# Custom function that sets width of text fields and colors it.
 
-	print( cW( out.settings[ 'name' ] + ':', 12, colorTitle ) ),			# Print name of account and allow for further text
+	print( cW( out.settings[ 'name' ] + ':', 12, colorTitle ), end = '' )			# Print name of account and allow for further text
 
 	if out.settings[ 'showNums' ] :
 
-		print( '(total: ' + str( out.numAll ) + ' | unseen: ' + str( out.numUnseen ) + ' )\n' )
+		print( "( total: %d | unseen: %d )" % (out.numAll, out.numUnseen) )
 	
-	else:
-		print( '\n' )
+	print( '\n' )
 
 
 	# Preamble printed. Now start printing individual email information
@@ -382,7 +395,7 @@ def display( out ) :
 				flag = 'N'
 				colorSubject = colorSubjectUnseen
 
-				print( cW( str(ii + 1), out.numDigits, align = '>' ) + flags( flag ) + cW( strDate, 17, colorDate ) + '    ' + cW( strFrom, 30, colorFrom ) + '   ' + cW( line['subject'], 120, colorSubject ) ) 
+			print( cW( str(ii + 1), out.numDigits, align = '>' ) + flags( flag ) + cW( email.Date, 17, colorDate ) + '    ' + cW( email.From, 30, colorFrom ) + '   ' + cW( email.Subject, 120, colorSubject ) ) 
 				
 
 
@@ -430,16 +443,27 @@ def main() :
 	applyGlobalSettings( globalSettings ) 		# Apply the global settings contained in the 'globalSettings' dictionary we created from the configuration file and command-line arguments
 
 
+	# Now we determine whether the output is intended to go to the terminal (stdout) straight or passed on to urwid
 
-	# Use urwid to display the results, interact with the display and possibly flag messages for deletion:
+	if globalSettings[ 'terminal' ]:		# Do NOT use urwid
 
-	from urwidDisplay import urwidDisplay
+		from miscClasses import threadedExec
 
-	# Create instance of the imported class to create and start the urwid loop to display emails
+		for out in threadedExec( servers, maxThreads ):
 
-	settings = { 'maxThreads': maxThreads, 'showFlags': showFlags }
+			display(out)
 
-	urwidDisplay( servers, settings )
+	else:
+
+		# Use urwid to display the results, interact with the display and possibly flag messages for deletion:
+	
+		from urwidDisplay import urwidDisplay
+	
+		# Create instance of the imported class to create and start the urwid loop to display emails
+	
+		settings = { 'maxThreads': maxThreads, 'showFlags': showFlags }
+	
+		urwidDisplay( servers, settings )
 
 
 
