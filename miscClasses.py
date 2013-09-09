@@ -418,7 +418,13 @@ def convertDate( strDate ) :
 
 	Local = LocalTimezone()		# create an instance of the LocalTimezone class defined above
 
-	ldt = dt.astimezone( Local )
+	try:
+		ldt = dt.astimezone( Local )
+	
+	except ValueError:
+
+		print('Error - Using .astimezone(local).')
+		return ''
 
 	return ldt.strftime( '%b %d - %I:%M %P' )
 
