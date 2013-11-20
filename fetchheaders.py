@@ -451,7 +451,16 @@ def main() :
 
         for out in threadedExec( servers, maxThreads ):
 
-            display(out)
+            if out.error:         # If an error occurs while constructing the Output object the exception is caught and the error flag is set
+
+                from miscClasses import colorWidth as cW
+
+                print( cW( out.settings[ 'name' ] + ':', 12, colorTitle ), end = '' )       # We indicate in the output that an Error has occurred.
+                print( "Error!\n\n" )
+
+            else:
+
+                display(out)
 
     else:
 

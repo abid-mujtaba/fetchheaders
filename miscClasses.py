@@ -41,7 +41,14 @@ def pollAccount( account ) :
 
     if account[ 'showNums' ] :
 
-        (numAll, numUnseen) = mail.numMsgs()
+        try:
+            (numAll, numUnseen) = mail.numMsgs()
+
+        except TypeError:           # This happens if an error occurred in connecting to the server and so numMsgs() returns a NoneType object
+
+            out.error = True
+
+            return out              # In this case we return out with the error flag set to True
 
         out.numAll = numAll		# Store numbers in output object
         out.numUnseen = numUnseen
@@ -324,8 +331,6 @@ def threadedExec( servers, maxThreads ) :
 
     # Create a number of threads to parallelize the tasks. Threads created using the Worker class inherited from the threading.Thread class:
 
-#	from miscClasses import Worker		# import the inherited threading class
-
 
     workers = [ Worker( pollAccount, inQueue, outQueue ) for ii in range( maxThreads ) ]		# maxThreads is a global variable that determines the maximum number of open threads
 
@@ -355,6 +360,8 @@ class Output() :
 
         self.settings = settings	# Store account name in class
         self.emails = []		# Stores the Email objects, one for each email/uid
+
+        self.error = False      # This is a flag used to indicate if an Error has occurred during the construction of this object
 
 
 

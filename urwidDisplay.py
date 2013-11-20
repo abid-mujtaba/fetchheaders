@@ -13,417 +13,391 @@
 
 class urwidDisplay() :
 
-	'''
-	This class acts as a wrapper around urwid objects and in fact will contian the urwid Main Loop as well. Most of the active parts will be carried out in the __init__ method so that the very act of creating an object of this class will cause the email header display using urwid to be executed. We will remain the __init__ method until the loop ends at which point the program will terminate as well. To that end the urwid event handler functions will be members of this class as well.
-	'''
+    '''
+    This class acts as a wrapper around urwid objects and in fact will contian the urwid Main Loop as well. Most of the active parts will be carried out in the __init__ method so that the very act of creating an object of this class will cause the email header display using urwid to be executed. We will remain the __init__ method until the loop ends at which point the program will terminate as well. To that end the urwid event handler functions will be members of this class as well.
+    '''
 
-	def __init__( self, servers, settings ) :
+    def __init__( self, servers, settings ) :
 
-		'''
-		This is the actionable part of the class and is responsible for initializing the class objects, implementing the urwid display and executing the main loop. 'servers' is an object which contains all the necessary information for logging in to the email accounts and extracting headers.
+        '''
+        This is the actionable part of the class and is responsible for initializing the class objects, implementing the urwid display and executing the main loop. 'servers' is an object which contains all the necessary information for logging in to the email accounts and extracting headers.
 
-		settings: <DIC> containing the global settings associated with the program
-		'''
+        settings: <DIC> containing the global settings associated with the program
+        '''
 
-		# Import the necessary modules and functions:
+        # Import the necessary modules and functions:
 
-		import urwid
-		from miscClasses import threadedExec		# This function implements email account access using threads
+        import urwid
+        from miscClasses import threadedExec		# This function implements email account access using threads
 
 
-		self.settings = settings		# Store the settings (mostly global for the program) locally in a dictionary
+        self.settings = settings		# Store the settings (mostly global for the program) locally in a dictionary
 
-		self.servers = servers			# This wealth of information will come in handy when we will be deleting emails
+        self.servers = servers			# This wealth of information will come in handy when we will be deleting emails
 
 
-		# Define the palette that will be used by urwid. Note that is defined to be a member of the urwidDisplay class as all objects will be
+        # Define the palette that will be used by urwid. Note that is defined to be a member of the urwidDisplay class as all objects will be
 
-		normal_bg_color = 'black'		# Here we define the default normal and focus state bg colors for the header lines displayed
-		focus_bg_color = 'light blue'
+        normal_bg_color = 'black'		# Here we define the default normal and focus state bg colors for the header lines displayed
+        focus_bg_color = 'light blue'
 
-		self.palette = [
-			( 'title', 'yellow', 'dark blue' ),
+        self.palette = [
+            ( 'title', 'yellow', 'dark blue' ),
 
-			( 'account', 'light red', normal_bg_color ),
-			( 'bw', 'white', normal_bg_color ),
-			
-			( 'flag', 'dark green', normal_bg_color ),	# We define the normal state color scheme for the various parts of the header
-			( 'date', 'brown', normal_bg_color ),
-			( 'from', 'dark cyan', normal_bg_color ),
-			( 'subject', 'dark green', normal_bg_color ),
-			( 'subjectSeen', 'brown', normal_bg_color ),
-									# We define the 'focus' state color scheme for various parts of the header. Note the 'F_' at the beginning of each name
-			( 'F_bw', 'white', focus_bg_color ) ,		# Black and White text when focussed
-			( 'F_flag', 'light green', focus_bg_color ),	
-			( 'F_date', 'yellow', focus_bg_color ),
-			( 'F_from', 'light cyan', focus_bg_color ),
-			( 'F_subject', 'light green', focus_bg_color ),
-			( 'F_subjectSeen', 'yellow', focus_bg_color ), 	
-									# We define the normal state flagged for Deletion scheme for the header. Note the 'D_' at the beginning of each name
-			( 'D_bw', 'dark red', normal_bg_color ),
-			( 'D_flag', 'dark red', normal_bg_color ),
-			( 'D_date', 'dark red', normal_bg_color ),
-			( 'D_from', 'dark red', normal_bg_color ),
-			( 'D_subject', 'dark red', normal_bg_color ),
-			( 'D_subjectSeen', 'dark red', normal_bg_color ),
-									# We define the focus state flagged for Deletion scheme for the header. Note the 'DF_' at the beginning of each name.
-			( 'DF_bw', 'dark red', focus_bg_color ),
-			( 'DF_flag', 'dark red', focus_bg_color ),
-			( 'DF_date', 'dark red', focus_bg_color ),
-			( 'DF_from', 'dark red', focus_bg_color ),
-			( 'DF_subject', 'dark red', focus_bg_color ),
-			( 'DF_subjectSeen', 'dark red', focus_bg_color ) ]	
+            ( 'account', 'light red', normal_bg_color ),
+            ( 'bw', 'white', normal_bg_color ),
 
+            ( 'flag', 'dark green', normal_bg_color ),	# We define the normal state color scheme for the various parts of the header
+            ( 'date', 'brown', normal_bg_color ),
+            ( 'from', 'dark cyan', normal_bg_color ),
+            ( 'subject', 'dark green', normal_bg_color ),
+            ( 'subjectSeen', 'brown', normal_bg_color ),
+                                    # We define the 'focus' state color scheme for various parts of the header. Note the 'F_' at the beginning of each name
+            ( 'F_bw', 'white', focus_bg_color ) ,		# Black and White text when focussed
+            ( 'F_flag', 'light green', focus_bg_color ),
+            ( 'F_date', 'yellow', focus_bg_color ),
+            ( 'F_from', 'light cyan', focus_bg_color ),
+            ( 'F_subject', 'light green', focus_bg_color ),
+            ( 'F_subjectSeen', 'yellow', focus_bg_color ),
+                                    # We define the normal state flagged for Deletion scheme for the header. Note the 'D_' at the beginning of each name
+            ( 'D_bw', 'dark red', normal_bg_color ),
+            ( 'D_flag', 'dark red', normal_bg_color ),
+            ( 'D_date', 'dark red', normal_bg_color ),
+            ( 'D_from', 'dark red', normal_bg_color ),
+            ( 'D_subject', 'dark red', normal_bg_color ),
+            ( 'D_subjectSeen', 'dark red', normal_bg_color ),
+                                    # We define the focus state flagged for Deletion scheme for the header. Note the 'DF_' at the beginning of each name.
+            ( 'DF_bw', 'dark red', focus_bg_color ),
+            ( 'DF_flag', 'dark red', focus_bg_color ),
+            ( 'DF_date', 'dark red', focus_bg_color ),
+            ( 'DF_from', 'dark red', focus_bg_color ),
+            ( 'DF_subject', 'dark red', focus_bg_color ),
+            ( 'DF_subjectSeen', 'dark red', focus_bg_color ) ]
 
 
-		self.title = urwid.AttrMap( urwid.Text( " FetchHeaders      q: Quit    a: Abort    d: Delete    u: UnDelete    j: Down    k: Up" ), 'title' )
 
-		self.div = urwid.Divider()
+        self.title = urwid.AttrMap( urwid.Text( " FetchHeaders      q: Quit    a: Abort    d: Delete    u: UnDelete    j: Down    k: Up" ), 'title' )
 
-		self.titlePile = urwid.Pile( [ self.title, self.div ] )
+        self.div = urwid.Divider()
 
+        self.titlePile = urwid.Pile( [ self.title, self.div ] )
 
-		self.emails = []		# This is a list which will contain the emails whose headers have been displayed. We will use it when shifting focus and marking for deletion.
 
-		self.focus = -1			# Initially no header has focus. This is donated by the value -1. 0 will donate the first header corresponding to self.emails[0].
+        self.emails = []		# This is a list which will contain the emails whose headers have been displayed. We will use it when shifting focus and marking for deletion.
 
-		
-		self.List = []		# This is the list of objects that will be used to construct the main listbox that displays all email headers and auxiliary information. 
+        self.focus = -1			# Initially no header has focus. This is donated by the value -1. 0 will donate the first header corresponding to self.emails[0].
 
-		# We will now extract header information from each account and use it to construct various objects. While doing so we must keep in mind that when focus shifts the objects must be re-drawn explicitly. This can be handled by constructing the lines every time it is required, using separate functions to handle the construction by simply passing them the same information
-		
 
-		for out in threadedExec( servers, self.settings[ 'maxThreads' ] ) :		# This calls the threaded processed to extract information and return it in an iterable queue
+        self.List = []		# This is the list of objects that will be used to construct the main listbox that displays all email headers and auxiliary information.
 
-			# Construct account line widget
-	
-			account = urwid.Text( ( 'account', ' ' + out.settings[ 'name' ] + ':' ) )
-	
-			if out.settings[ 'showNums' ] :			# Numbers are supposed to displayed after the account name
-	
-				numbers = urwid.Text( ( 'bw', '( total: ' + str( out.numAll ) + ' | unseen: ' + str( out.numUnseen ) + ' )' ) ) 
-	
-				accountLine = urwid.Columns( [ ( 'fixed', 13, account ), numbers ] )
-	
-			else :			# Don't display numbers
-	
-				accountLine = urwid.Columns( [ ( 'fixed', 13, account ) ] )
-	
-	
-			self.List += [ accountLine, self.div ]		# First line displays account name and number of messages
+        # We will now extract header information from each account and use it to construct various objects. While doing so we must keep in mind that when focus shifts the objects must be re-drawn explicitly. This can be handled by constructing the lines every time it is required, using separate functions to handle the construction by simply passing them the same information
 
 
+        for out in threadedExec( servers, self.settings[ 'maxThreads' ] ) :		# This calls the threaded processed to extract information and return it in an iterable queue
 
-			# We now construct and display the email headers
-	
-			for ii in range( len( out.emails ) ) :
-	
-				email = out.emails[ ii ]
+            if out.error:         # out.error is True if an Exception is raised while it is being calculated. In such a case we display an error line
 
-				email.account = out.settings[ 'name' ]		# Store name of account associated with each email
+                account = urwid.Text( ('account', ' ' + out.settings[ 'name' ] + ':' ) )
+                error = urwid.Text(('bw', 'Error!'))
+                accountLine = urwid.Columns( [('fixed', 13, account), error ])
 
-				email.Delete = False		# Boolean Flag for tracking if email has to be deleted.
+                self.List += [ accountLine ]
 
-				email.serial = ii + 1		# Serial Number associated with this email
+            else:
+                # Construct account line widget
 
-				email.numDigits = out.numDigits		# No. of digits for displaying serial number, calculated by analyzing the number of emails for this particular account
+                account = urwid.Text( ( 'account', ' ' + out.settings[ 'name' ] + ':' ) )
 
-				email.listPos = len( self.List )	# Store the position of the email header urwid object (urwid.Columns) in self.List. Will need it for focusing or deletion.
+                if out.settings[ 'showNums' ] :			# Numbers are supposed to displayed after the account name
 
-				self.emails.append( email )		# Add the displayed email to the self.emails list
+                    numbers = urwid.Text( ( 'bw', '( total: ' + str( out.numAll ) + ' | unseen: ' + str( out.numUnseen ) + ' )' ) )
 
+                    accountLine = urwid.Columns( [ ( 'fixed', 13, account ), numbers ] )
 
-				line = self.constructLine( email, focus = False )
+                else :			# Don't display numbers
 
+                    accountLine = urwid.Columns( [ ( 'fixed', 13, account ) ] )
 
-				self.List.append( line )		# Call constructLine to create header line using data in 'email' object. ii + 1 is serial number
 
+                self.List += [ accountLine, self.div ]		# First line displays account name and number of messages
 
 
-			self.List += [ self.div, self.div ] 		# Add two empty lines after account ends
 
+                # We now construct and display the email headers
 
-		self.total = len( self.emails )		# Total no. of emails being displayed
+                for ii in range( len( out.emails ) ) :
 
+                    email = out.emails[ ii ]
 
-		# All account information has been input and the urwid display is almost ready:
+                    email.account = out.settings[ 'name' ]		# Store name of account associated with each email
 
-		self.listbox = urwid.ListBox( self.List )
+                    email.Delete = False		# Boolean Flag for tracking if email has to be deleted.
 
-		self.frame = urwid.Frame( self.listbox, header = self.titlePile )		# By using a frame we ensure that the top title doesn't move when we scroll through the listbox
-		
-		self.loop = urwid.MainLoop( self.frame, self.palette, unhandled_input = self.handler )
+                    email.serial = ii + 1		# Serial Number associated with this email
 
-		
-		# Now we run the main loop:
+                    email.numDigits = out.numDigits		# No. of digits for displaying serial number, calculated by analyzing the number of emails for this particular account
 
-		self.loop.run()
+                    email.listPos = len( self.List )	# Store the position of the email header urwid object (urwid.Columns) in self.List. Will need it for focusing or deletion.
 
-	
+                    self.emails.append( email )		# Add the displayed email to the self.emails list
 
 
-	def handler( self, key ) :
+                    line = self.constructLine( email, focus = False )
 
-		'''
-		This is the input handler. This takes unprocessed key presses from urwid and translates them in to the appropriate action.
-		'''
 
-		import urwid
+                    self.List.append( line )		# Call constructLine to create header line using data in 'email' object. ii + 1 is serial number
 
 
-		if key in ( 'a', 'A' ) :		# Exit loop without making any changes (NO Deletions) when the 'A' key is pressed (in any case) 
+            self.List += [ self.div, self.div ] 		# Add two empty lines after account ends
 
-			raise urwid.ExitMainLoop()
 
+        self.total = len( self.emails )		# Total no. of emails being displayed
 
-		if key in ( 'j', 'J' ) :		# This pushes focus down
 
-			self.focus += 1
+        # All account information has been input and the urwid display is almost ready:
 
-			self.shiftFocus( self.focus - 1 )		# Call the shiftFocus() method to implement the change in focus. We need to pass it the last focus so that it can be unfocussed.
+        self.listbox = urwid.ListBox( self.List )
 
+        self.frame = urwid.Frame( self.listbox, header = self.titlePile )		# By using a frame we ensure that the top title doesn't move when we scroll through the listbox
 
-		if key in ( 'k', 'K' ) :		# This pushes the focus up
+        self.loop = urwid.MainLoop( self.frame, self.palette, unhandled_input = self.handler )
 
-			self.focus -= 1
 
-			self.shiftFocus( self.focus + 1 )
+        # Now we run the main loop:
 
+        self.loop.run()
 
-		if key in ( 'd', 'D' ) :		# Email in focus must be flagged for deletion
 
-			self.emails[ self.focus ].Delete = True		# Set Delete flag on focused email
 
-			# Shift focus forward (down) by one to move to the next email
 
-			self.focus += 1
+    def handler( self, key ) :
 
-			self.shiftFocus( self.focus - 1 )		# Call shiftFocus() to implement change in display status. 'None' is passed since the focus hasn't moved.
+        '''
+        This is the input handler. This takes unprocessed key presses from urwid and translates them in to the appropriate action.
+        '''
 
+        import urwid
 
-		if key in ( 'u', 'U' ) :
 
-			self.emails[ self.focus ].Delete = False	# UnSet Delete flag on focused email
+        if key in ( 'a', 'A' ) :		# Exit loop without making any changes (NO Deletions) when the 'A' key is pressed (in any case)
 
-			# Shift focus forward (down) by one to move to the next email
+            raise urwid.ExitMainLoop()
 
-			self.focus += 1
 
-			self.shiftFocus( self.focus - 1 )
+        if key in ( 'j', 'J' ) :		# This pushes focus down
 
+            self.focus += 1
 
-		if key in ( 'q', 'Q' ) :
+            self.shiftFocus( self.focus - 1 )		# Call the shiftFocus() method to implement the change in focus. We need to pass it the last focus so that it can be unfocussed.
 
-			self.titlePile[0].set_text( " FetchHeaders   -   Deleting Emails and Exiting." )		# Change title to indicate process.
 
-			self.loop.draw_screen()		# Force redraw so that the title changes
+        if key in ( 'k', 'K' ) :		# This pushes the focus up
 
-			self.quit()		# Call the quit() method/function to delete flagged emails and exit the program
+            self.focus -= 1
 
+            self.shiftFocus( self.focus + 1 )
 
 
+        if key in ( 'd', 'D' ) :		# Email in focus must be flagged for deletion
 
-	def quit( self ) :
+            self.emails[ self.focus ].Delete = True		# Set Delete flag on focused email
 
-		'''
-		This method/function deletes all emails that have been flagged for deletion and then exits the program.
-		'''
+            # Shift focus forward (down) by one to move to the next email
 
-		import urwid
-		
-		# The first step is to scan self.emails and find the emails flagged for deletion. We collect them in a single data structure:
+            self.focus += 1
 
-		delete = {}
+            self.shiftFocus( self.focus - 1 )		# Call shiftFocus() to implement change in display status. 'None' is passed since the focus hasn't moved.
 
-		for email in self.emails :
 
-			if email.Delete :		# Email is marked for deletion
+        if key in ( 'u', 'U' ) :
 
-				if not email.account in delete.keys() :		# Checking if the account exists in the 'delete' dictionary as a key. If not it must be created as an empty list
+            self.emails[ self.focus ].Delete = False	# UnSet Delete flag on focused email
 
-					delete[ email.account ] = []		# Empty list created to hold uids of emails flagged for deletion
+            # Shift focus forward (down) by one to move to the next email
 
-				delete[ email.account ].append( email.uid )
+            self.focus += 1
 
+            self.shiftFocus( self.focus - 1 )
 
-		# If any emails have been specified for deletion we continue:
 
-		if delete :		# One True if the <DIC> is non-empty
+        if key in ( 'q', 'Q' ) :
 
-			# Now we delete the specified emails by logging in to the various accounts in a threaded fashion:
-	
-			from Queue import Queue
-	
-			inQueue = Queue()
-	
-	
-			# Populate Queue with task data
-	
-			for name in delete.keys() :
-	
-				inQueue.put( { 'account': self.servers[ name ], 'listUIDs': delete[ name ] } )		# Add <DIC> containing account settings and UIDs of emails to be deleted.
-	
-			
-			# Create a number of threads to parallelize the task:
-	
-			from miscClasses import delWorker
-	
-			workers = [ delWorker( inQueue ) for ii in range( self.settings[ 'maxThreads' ] ) ]
-	
-			
-			for worker in workers :
-	
-				worker.start()		# Begin execution of each thread
-	
-	
-			inQueue.join()		# Pause program execution here until all tasks in inQueue are complete
+            self.titlePile[0].set_text( " FetchHeaders   -   Deleting Emails and Exiting." )		# Change title to indicate process.
 
+            self.loop.draw_screen()		# Force redraw so that the title changes
 
-#		for name in delete.keys() :		# 'name' contains the name of the account
-#
-#			account = self.servers[ name ]
-#
-#			trashFolder = account[ 'trashFolder' ]		# Get name of Trash Folder associated with specified account
-#
-#			flagDeleteEmails = account[ 'deleteEmails' ]		# Get boolean flag which indicates whether emails actually need to be physically deleted, or just copied.
-#
-#
-#			from imapServer import imapServer
-#
-#			mail = imapServer( account['host'] )
-#
-#			mail.login( account['username'], account['password'] )
-#
-#			mail.select()
-#
-#			# Now we have accessed the proper folder:
-#
-#			# First we copy the emails to the Trash folder:
-#
-#			mail.copy( delete[name], trashFolder )		# We send the list of UIDs and the name of the trash folder to mail.copy() so that these emails can be copied in to the Trash Folder
-#
-#
-#			if flagDeleteEmails :			# If the account setting indicates that emails are to be deleted after copying. Set to False for Gmail accounts.
-#
-#				mail.delete( delete[ name ] )		# Provide mail.delete with list of UIDs. The method flags the emails for deletion on the IMAP server.
-#	
-#				mail.expunge()			# This tells the IMAP server to actually delete the emails flagged as such
-#
-#
-#			mail.logout()			# Logout gracefully from the account
+            self.quit()		# Call the quit() method/function to delete flagged emails and exit the program
 
 
-		raise urwid.ExitMainLoop()
 
 
+    def quit( self ) :
 
+        '''
+        This method/function deletes all emails that have been flagged for deletion and then exits the program.
+        '''
 
-	def shiftFocus( self, oldFocus ) :
+        import urwid
 
-		'''
-		This method/function is called whenever the focus shifts. It implements said change.
-		'''
+        # The first step is to scan self.emails and find the emails flagged for deletion. We collect them in a single data structure:
 
-		# The first step is to check whether the focus is out of bounds or not.
+        delete = {}
 
-		if self.focus < 0 :  self.focus = self.total - 1		# Treat emails in a circular data structure. We set focus to the last email.
+        for email in self.emails :
 
-		if self.focus >= self.total :  self.focus = 0			# Move around the circle and set focus to first email.
+            if email.Delete :		# Email is marked for deletion
 
+                if not email.account in delete.keys() :		# Checking if the account exists in the 'delete' dictionary as a key. If not it must be created as an empty list
 
-		# First we unfocus the previously focussed email, if there is one.
+                    delete[ email.account ] = []		# Empty list created to hold uids of emails flagged for deletion
 
-		if oldFocus != None :		# If 'None' has been passed in the focus hasn't changed position, for instance if the email is to be marked for deletion.
+                delete[ email.account ].append( email.uid )
 
-			email = self.emails[ oldFocus ]
-	
-			self.List[ email.listPos ] = self.constructLine( email, focus = False )
-	
 
-		# Now implement change in focus.
+        # If any emails have been specified for deletion we continue:
 
-		email = self.emails[ self.focus ]		# We select the email object associated with the new focus
+        if delete :		# One True if the <DIC> is non-empty
 
-		self.List[ email.listPos ] = self.constructLine( email, focus = True )
+            # Now we delete the specified emails by logging in to the various accounts in a threaded fashion:
 
+            from Queue import Queue
 
-		# Finally change listbox focus so that the listbox scrolls properly with our scrolling:
+            inQueue = Queue()
 
-		self.listbox.set_focus( email.listPos )
 
+            # Populate Queue with task data
 
+            for name in delete.keys() :
 
+                inQueue.put( { 'account': self.servers[ name ], 'listUIDs': delete[ name ] } )		# Add <DIC> containing account settings and UIDs of emails to be deleted.
 
 
-	def constructLine( self, email, focus = False ) :
+            # Create a number of threads to parallelize the task:
 
-		'''
-		This function takes the 'email' object and a single flag and uses them to construct a urwid.Column object representing the correctly formatted header line for the display. This is stored in the listbox for displaying.
+            from miscClasses import delWorker
 
-		serialNum: An integer specifying the serial number associated with the email in the list of emails when it is displayed.
-		
-		numDigits: Number of digits for displaying the serial number. An account level value that has already been calculated.
+            workers = [ delWorker( inQueue ) for ii in range( self.settings[ 'maxThreads' ] ) ]
 
-		self.settings: A Dictionary containing the following settings.
-	
-			showUnseen: A boolean flag. Global setting. When true indicates that only unseen messages are to be displayed.
-	
-			showFlags: A boolean flag. Gobal setting. When true indicates the flags are to displayed
 
-		focus: A boolean flag. When True indicates that the line is in focus and so the coloring scheme needs to be changed.
-		'''
+            for worker in workers :
 
-		import urwid
-		from miscClasses import strWidth as sW
-		
-		if focus : pre = 'F_'		# This string determines which color from the palette is used: normal of focus scheme, flagged for deletion or not.
+                worker.start()		# Begin execution of each thread
 
-		else : pre = ''
 
-		if email.Delete :
+            inQueue.join()		# Pause program execution here until all tasks in inQueue are complete
 
-			if focus: pre = 'DF_'		# Email is both flagged for deletion and in focus
 
-			else : pre = 'D_'		# Email is flagged for deletion
+        raise urwid.ExitMainLoop()
 
 
-		date = urwid.Text( ( pre + 'date', sW( email.Date, 17 ) ) )
-		From = urwid.Text( ( pre + 'from', sW( email.From, 30 ) ) )
-		serial = urwid.Text( ( pre + 'bw', sW( str( email.serial ), email.numDigits, align = '>' ) ) ) 
-		
 
-		if not email.Seen :		# If email is unseen then:
 
-			subject = urwid.Text( ( pre + 'subject', sW( email.Subject, 120 ) ) )
-		
-		else:
+    def shiftFocus( self, oldFocus ) :
 
-			subject = urwid.Text( ( pre + 'subjectSeen', sW( email.Subject, 120 ) ) )
+        '''
+        This method/function is called whenever the focus shifts. It implements said change.
+        '''
 
+        # The first step is to check whether the focus is out of bounds or not.
 
-		if self.settings[ 'showFlags' ] :		# Flags are to be displayed
+        if self.focus < 0 :  self.focus = self.total - 1		# Treat emails in a circular data structure. We set focus to the last email.
 
-			if email.Seen :
+        if self.focus >= self.total :  self.focus = 0			# Move around the circle and set focus to first email.
 
-				if email.Delete : ch = " D "
 
-				else : ch = "   "
+        # First we unfocus the previously focussed email, if there is one.
 
-			else :
-				if email.Delete : ch = " ND"
+        if oldFocus != None :		# If 'None' has been passed in the focus hasn't changed position, for instance if the email is to be marked for deletion.
 
-				else : ch = " N "
+            email = self.emails[ oldFocus ]
 
+            self.List[ email.listPos ] = self.constructLine( email, focus = False )
 
-			sep = [ ('fixed', 2, urwid.Text(( pre + 'bw', " [" ))), ('fixed', 3, urwid.Text(( pre + 'flag', ch ))), ('fixed', 4, urwid.Text(( pre + 'bw', "]   " ))) ] 
-		
-		else :
-			sep = [ ( 'fixed', 3, urwid.Text(( pre + 'bw', ".  " )) ) ]
 
+        # Now implement change in focus.
 
-		lineList = [ ('fixed', email.numDigits, serial) ] + sep + [ ('fixed', 21, date ), ('fixed', 34, From), subject ]
+        email = self.emails[ self.focus ]		# We select the email object associated with the new focus
 
-		
-		line = urwid.AttrMap( urwid.Columns( lineList ), pre + 'bw' )		# Applying the AttrMap here ensures the whole line gets the same background color
+        self.List[ email.listPos ] = self.constructLine( email, focus = True )
 
-		return line		# Return the constructed line
+
+        # Finally change listbox focus so that the listbox scrolls properly with our scrolling:
+
+        self.listbox.set_focus( email.listPos )
+
+
+
+
+
+    def constructLine( self, email, focus = False ) :
+
+        '''
+        This function takes the 'email' object and a single flag and uses them to construct a urwid.Column object representing the correctly formatted header line for the display. This is stored in the listbox for displaying.
+
+        serialNum: An integer specifying the serial number associated with the email in the list of emails when it is displayed.
+
+        numDigits: Number of digits for displaying the serial number. An account level value that has already been calculated.
+
+        self.settings: A Dictionary containing the following settings.
+
+            showUnseen: A boolean flag. Global setting. When true indicates that only unseen messages are to be displayed.
+
+            showFlags: A boolean flag. Gobal setting. When true indicates the flags are to displayed
+
+        focus: A boolean flag. When True indicates that the line is in focus and so the coloring scheme needs to be changed.
+        '''
+
+        import urwid
+        from miscClasses import strWidth as sW
+
+        if focus : pre = 'F_'		# This string determines which color from the palette is used: normal of focus scheme, flagged for deletion or not.
+
+        else : pre = ''
+
+        if email.Delete :
+
+            if focus: pre = 'DF_'		# Email is both flagged for deletion and in focus
+
+            else : pre = 'D_'		# Email is flagged for deletion
+
+
+        date = urwid.Text( ( pre + 'date', sW( email.Date, 17 ) ) )
+        From = urwid.Text( ( pre + 'from', sW( email.From, 30 ) ) )
+        serial = urwid.Text( ( pre + 'bw', sW( str( email.serial ), email.numDigits, align = '>' ) ) )
+
+
+        if not email.Seen :		# If email is unseen then:
+
+            subject = urwid.Text( ( pre + 'subject', sW( email.Subject, 120 ) ) )
+
+        else:
+
+            subject = urwid.Text( ( pre + 'subjectSeen', sW( email.Subject, 120 ) ) )
+
+
+        if self.settings[ 'showFlags' ] :		# Flags are to be displayed
+
+            if email.Seen :
+
+                if email.Delete : ch = " D "
+
+                else : ch = "   "
+
+            else :
+                if email.Delete : ch = " ND"
+
+                else : ch = " N "
+
+
+            sep = [ ('fixed', 2, urwid.Text(( pre + 'bw', " [" ))), ('fixed', 3, urwid.Text(( pre + 'flag', ch ))), ('fixed', 4, urwid.Text(( pre + 'bw', "]   " ))) ]
+
+        else :
+            sep = [ ( 'fixed', 3, urwid.Text(( pre + 'bw', ".  " )) ) ]
+
+
+        lineList = [ ('fixed', email.numDigits, serial) ] + sep + [ ('fixed', 21, date ), ('fixed', 34, From), subject ]
+
+
+        line = urwid.AttrMap( urwid.Columns( lineList ), pre + 'bw' )		# Applying the AttrMap here ensures the whole line gets the same background color
+
+        return line		# Return the constructed line
