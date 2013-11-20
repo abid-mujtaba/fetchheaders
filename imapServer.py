@@ -16,354 +16,354 @@
 
 class imapServer: 	# This class implements all the functionality we need from the interface with a given imap server. It forms a wrapper around the 'imaplib' module.
 
-	def __init__( self, server ) :
+    def __init__( self, server ) :
 
-		'''
-		This is the constructor function for this class. It requires the servername in the form of a string.
+        '''
+        This is the constructor function for this class. It requires the servername in the form of a string.
 
-		Note: All connections will be made using SSL so only SSL enabled imap servers are accessible.
-		'''
+        Note: All connections will be made using SSL so only SSL enabled imap servers are accessible.
+        '''
 
-		self.server = server
-		
-		import imaplib		# Import the crucial module that allows interaction with IMAP servers	
+        self.server = server
 
-		try :
-			self.mail = imaplib.IMAP4_SSL( self.server )		# Establish connection with the server.
+        import imaplib		# Import the crucial module that allows interaction with IMAP servers
 
-		except:
-			print( 'Unable to establish SSL connection to IMAP server ' + self.server )
+        try :
+            self.mail = imaplib.IMAP4_SSL( self.server )		# Establish connection with the server.
 
+        except:
+            print( 'Unable to establish SSL connection to IMAP server ' + self.server )
 
 
-	def login( self, username, password ) :
 
-		'''
-		Method for sending credentials to IMAP server for logging in.
-		'''
+    def login( self, username, password ) :
 
-		self.username = username	# Saving credentials in object as members.
-		self.password = password
-	
-		try: 
-			self.mail.login( self.username, self.password )
+        '''
+        Method for sending credentials to IMAP server for logging in.
+        '''
 
-		except:
-			print( 'Credentials (username and password) rejected by IMAP server (or connection lost).' )
-	
+        self.username = username	# Saving credentials in object as members.
+        self.password = password
 
-	
-	def logout( self ) :
+        try:
+            self.mail.login( self.username, self.password )
 
-		'''
-		Method for closing the selected folder and logging out of the IMAP server.
-		'''
+        except:
+            print( 'Credentials (username and password) rejected by IMAP server (or connection lost).' )
 
-		try:
-			self.mail.close()
-			self.mail.logout()
 
-		except:
-			print( 'Unable to successfully logout of IMAP server.' )
 
-	
+    def logout( self ) :
 
-	def select( self, folder = "INBOX" ) :
+        '''
+        Method for closing the selected folder and logging out of the IMAP server.
+        '''
 
-		'''
-		Method for selecting a paticular folder on the imap server. The Inbox is the default option.
+        try:
+            self.mail.close()
+            self.mail.logout()
 
-		The folder must be specified as a string according to the IMAP protocols (the string you would use when connecting using imaplib or telnet (openssl). A list of the folders one can access can be listed using the .listFolders() method.
-		'''
+        except:
+            print( 'Unable to successfully logout of IMAP server.' )
 
-		self.folder = folder
 
-		try: 
-			self.mail.select( self.folder )
-	
-		except:
-			print( 'Unable to select folder ' + self.folder + ' in IMAP server.' )
-	
 
+    def select( self, folder = "INBOX" ) :
 
+        '''
+        Method for selecting a paticular folder on the imap server. The Inbox is the default option.
 
-	def examine( self, folder = 'INBOX' ) :
+        The folder must be specified as a string according to the IMAP protocols (the string you would use when connecting using imaplib or telnet (openssl). A list of the folders one can access can be listed using the .listFolders() method.
+        '''
 
-		'''
-		Method for examining a particular folder. This differs from 'select' in that it is purely readonly, not even the flags (such as 'SEEN') are altered by choosing a folder using 'examine'.
+        self.folder = folder
 
-		The folder must be specified as a string according to the IMAP protocols (see .select() above).
-		'''
+        try:
+            self.mail.select( self.folder )
 
-		self.folder = folder
+        except:
+            print( 'Unable to select folder ' + self.folder + ' in IMAP server.' )
 
-		try:
-			self.mail.select( self.folder, readonly = True )
 
-		except:
-			print( 'Unable to examine folder ' + self.folder + ' in IMAP server.' )
 
 
+    def examine( self, folder = 'INBOX' ) :
 
+        '''
+        Method for examining a particular folder. This differs from 'select' in that it is purely readonly, not even the flags (such as 'SEEN') are altered by choosing a folder using 'examine'.
 
-	def listFolders( self ) :
+        The folder must be specified as a string according to the IMAP protocols (see .select() above).
+        '''
 
-		'''
-		Method lists all the folders in the account on the imap server. The output is a raw string.
+        self.folder = folder
 
-		The method assumes that self.login() has been called i.e. self.mail is currently connected to the user's account.
-		'''
+        try:
+            self.mail.select( self.folder, readonly = True )
 
-		try:
-			tmpList = self.mail.list()[1]		# The first member of list() is the result of the attempt. 'OK' if successful. The second member is the list.
-		except:
-			print( 'Unable to list folders in account' )
+        except:
+            print( 'Unable to examine folder ' + self.folder + ' in IMAP server.' )
 
 
-		return tmpList
 
 
+    def listFolders( self ) :
 
+        '''
+        Method lists all the folders in the account on the imap server. The output is a raw string.
 
-	def totalMsgs( self ) :
+        The method assumes that self.login() has been called i.e. self.mail is currently connected to the user's account.
+        '''
 
-		'''
-		Method to return total number of messages in currently selected folder.
-		'''
+        try:
+            tmpList = self.mail.list()[1]		# The first member of list() is the result of the attempt. 'OK' if successful. The second member is the list.
+        except:
+            print( 'Unable to list folders in account' )
 
-		try:
-			tmpStr = self.mail.status( self.folder, "(messages)" )[1][0]	  # status returns list of lists with us needing the first element of the second list
 
-		except:
-			print( 'Unable to receive total number of messages in folder: ' + self.folder )
+        return tmpList
 
-		else:
-			return int( _substring( '.*MESSAGES ([0-9]*).*', tmpStr ) )		# Returned as an integer NOT a string
-	
 
 
 
-	def unseenMsgs( self ) :
+    def totalMsgs( self ) :
 
-		'''
-		Method to return number of unseen messages in currently selected folder.
-		'''
+        '''
+        Method to return total number of messages in currently selected folder.
+        '''
 
-		try:
-			tmpStr = self.mail.status( self.folder, "(unseen)" )[1][0]
+        try:
+            tmpStr = self.mail.status( self.folder, "(messages)" )[1][0]	  # status returns list of lists with us needing the first element of the second list
 
-		except:
-			print( 'Unable to receive number of unseen messages in folder: ' + self.folder )
+        except:
+            print( 'Unable to receive total number of messages in folder: ' + self.folder )
 
-		else:
-			return int( _substring( ".*UNSEEN ([0-9]*).*", tmpStr ) )
+        else:
+            return int( _substring( '.*MESSAGES ([0-9]*).*', tmpStr ) )		# Returned as an integer NOT a string
 
 
-	
-	def numMsgs( self ) :
 
-		'''
-		Method to return both the number of total messages and unseen messages in one go as a tuple of form (total, unseen).
-		'''
 
-		try:
-			tmpStr = self.mail.status( self.folder, "(messages unseen)" )[1][0]
+    def unseenMsgs( self ) :
 
-		except:
-			print( 'Unable to receive number of total and unseen messages in folder: ' + self.folder )
+        '''
+        Method to return number of unseen messages in currently selected folder.
+        '''
 
-		else:
+        try:
+            tmpStr = self.mail.status( self.folder, "(unseen)" )[1][0]
 
-			numAll = int( _substring( '.*MESSAGES ([0-9]*).*', tmpStr ) )
-			numUnseen = int( _substring( '.*UNSEEN ([0-9]*).*', tmpStr ) )
+        except:
+            print( 'Unable to receive number of unseen messages in folder: ' + self.folder )
 
-			return (numAll, numUnseen)
-	
+        else:
+            return int( _substring( ".*UNSEEN ([0-9]*).*", tmpStr ) )
 
 
-	def getUids( self, strSearch ) :
 
-		'''
-		Method to return the unique UIDs of emails from current folder based upon the status of certain flags as specified by 'strSearch'. The method has the ability to return the UIDs of all messages or just unseen messages .etc.
+    def numMsgs( self ) :
 
-		strSearch excepts all of the strings accepted by the SEARCH method in the IMAP protocol. We will mostly be working with "ALL" and "UNSEEN".
-		'''
+        '''
+        Method to return both the number of total messages and unseen messages in one go as a tuple of form (total, unseen).
+        '''
 
-		try:
-			return self.mail.uid( 'search', None, strSearch )[1][0].split()		# This generates a list of UIDs as strings containing integers only.
+        try:
+            tmpStr = self.mail.status( self.folder, "(messages unseen)" )[1][0]
 
-		except:
-			print( 'Unable to retrieve UIDs of emails specified by strSearch from IMAP server in folder: ' + self.folder )
+        except:
+            print( 'Unable to receive number of total and unseen messages in folder: ' + self.folder )
 
-	
+        else:
 
+            numAll = int( _substring( '.*MESSAGES ([0-9]*).*', tmpStr ) )
+            numUnseen = int( _substring( '.*UNSEEN ([0-9]*).*', tmpStr ) )
 
-	def fetchHeaders( self, lstUIDs, lstFields = ['from', 'subject'] ) :
+            return (numAll, numUnseen)
 
-		'''
-		Method to fetch fields specified by the list of strings 'lstFields' of the emails whose UIDs are in the list 'lstUIDs' from the current folder.
 
-		lstUIDs is a list of UIDs, each UID being a string containing an integer.
 
-		lstFields is a list of strings specifying the HEADER fields that fetch will use to extract information from the specified emails. A common example for fetching just 'from' and 'subject' fields is ['From', 'Subject']. The first letter of each field string must be uppercase and all the latter ones need to be in lowercase.
+    def getUids( self, strSearch ) :
 
-		The output of this method is a dictionary of dictonaries. Each UID is associated with a dictionary where the keys are the values of lstFields.
-		'''
+        '''
+        Method to return the unique UIDs of emails from current folder based upon the status of certain flags as specified by 'strSearch'. The method has the ability to return the UIDs of all messages or just unseen messages .etc.
 
-		import re
+        strSearch excepts all of the strings accepted by the SEARCH method in the IMAP protocol. We will mostly be working with "ALL" and "UNSEEN".
+        '''
 
-		# We will retrieve each field one at a time. This will increase the internet load but will make it much easier for us to deal with the information that we get since we won't have to parse the information.
+        try:
+            return self.mail.uid( 'search', None, strSearch )[1][0].split()		# This generates a list of UIDs as strings containing integers only.
 
-		output = {}
+        except:
+            print( 'Unable to retrieve UIDs of emails specified by strSearch from IMAP server in folder: ' + self.folder )
 
-		for item in lstUIDs :	output[ item ] = {}	# Initiate the output dictionary of dictionaries
 
-		for field in lstFields :
 
-			try :
-				data = self.mail.uid( 'fetch', ','.join( lstUIDs ), '(BODY[HEADER.FIELDS (' + field + ')])' )[1]
 
-			except:
-				print( 'Unable to fetch field ' + field + ' from folder ' + self.folder )
+    def fetchHeaders( self, lstUIDs, lstFields = ['from', 'subject'] ) :
 
-			else :
-				
-				for ii in range( len( lstUIDs ) ) :
-					
-					uid = lstUIDs[ii]
+        '''
+        Method to fetch fields specified by the list of strings 'lstFields' of the emails whose UIDs are in the list 'lstUIDs' from the current folder.
 
-					# Remove the field name from data using Regex. This requires us to put 'field' in to pascal case.
+        lstUIDs is a list of UIDs, each UID being a string containing an integer.
 
-					pField = field[0].upper() + field[1:].lower()	# Convert to Pascal case
+        lstFields is a list of strings specifying the HEADER fields that fetch will use to extract information from the specified emails. A common example for fetching just 'from' and 'subject' fields is ['From', 'Subject']. The first letter of each field string must be uppercase and all the latter ones need to be in lowercase.
 
-					string = data[ 2 * ii ][1]
+        The output of this method is a dictionary of dictonaries. Each UID is associated with a dictionary where the keys are the values of lstFields.
+        '''
 
-					string = _reduceWhitespace( string )
+        import re
 
-					m = re.match( pField + ': (.*)', string ) 
+        # We will retrieve each field one at a time. This will increase the internet load but will make it much easier for us to deal with the information that we get since we won't have to parse the information.
 
-					if m :
-						output[ uid ][ field ] = m.group(1)
+        output = {}
 
-					else :
-						output[ uid ][ field ] = 'RegEx Error: ' + string
+        for item in lstUIDs :	output[ item ] = {}	# Initiate the output dictionary of dictionaries
 
-		return output
+        for field in lstFields :
 
+            try :
+                data = self.mail.uid( 'fetch', ','.join( lstUIDs ), '(BODY[HEADER.FIELDS (' + field + ')])' )[1]
 
+            except:
+                print( 'Unable to fetch field ' + field + ' from folder ' + self.folder )
 
+            else :
 
-	def fetchFlags( self, lstUIDs ) :
+                for ii in range( len( lstUIDs ) ) :
 
-		'''
-		Method for fetching flags for the specified emails.
-		'''
+                    uid = lstUIDs[ii]
 
-		output = {}	# Create empty dictionary
+                    # Remove the field name from data using Regex. This requires us to put 'field' in to pascal case.
 
-		try :
-			data = self.mail.uid( 'fetch', ','.join( lstUIDs ), 'flags' )[1]
+                    pField = field[0].upper() + field[1:].lower()	# Convert to Pascal case
 
-		except :
-			print( 'Unable to fetch flags for specified emails.' )
+                    string = data[ 2 * ii ][1]
 
-		else :
-			import re
+                    string = _reduceWhitespace( string )
 
-			for item in data :
+                    m = re.match( pField + ': (.*)', string )
 
-				m = re.match( '.*UID ([0-9]*)[^\(]*\(([^\)]*).*', item )
+                    if m :
+                        output[ uid ][ field ] = m.group(1)
 
-				if m:
-					output[ m.group(1) ] = m.group(2)
+                    else :
+                        output[ uid ][ field ] = 'RegEx Error: ' + string
 
-			return output
+        return output
 
 
 
 
-	def fetch( self, lstUIDs, strFetch ) :
+    def fetchFlags( self, lstUIDs ) :
 
-		'''
-		Wrapper method for the IMAP 'fetch' command. This accepts the standard string used in an IMAP 'fetch' request, along with a list of UIDs identifying the emails for which the fetch request will be carried out. The output is the raw unformatted, unfiltered text that is returned by the server.
+        '''
+        Method for fetching flags for the specified emails.
+        '''
 
-		The standard request to get just 'From' and 'Subject' fields is to use strFetch = '(BODY[HEADER.FIELDS (from subject)])'
-		'''
+        output = {}	# Create empty dictionary
 
-		try :
-			return self.mail.uid( 'fetch', ','.join( lstUIDs ), strFetch )[1]
-		
-		except :
-			print( 'Unable to fetch (raw) fields for emails from folder ' + self.folder )
+        try :
+            data = self.mail.uid( 'fetch', ','.join( lstUIDs ), 'flags' )[1]
 
-	
+        except :
+            print( 'Unable to fetch flags for specified emails.' )
 
-	def copy( self, lstUIDs, folder ) :
+        else :
+            import re
 
-		'''
-		Method copyies the emails specified by list 'lstUIDs' to the specified folder (a string). This method will work with EXAMINE as well as SELECT.
-		'''
+            for item in data :
 
-		try :
-			self.mail.uid( 'copy', ','.join( lstUIDs ), folder )
+                m = re.match( '.*UID ([0-9]*)[^\(]*\(([^\)]*).*', item )
 
-		except :
-			print( 'Unable to copy specified emails to folder ' + folder + '.' )
+                if m:
+                    output[ m.group(1) ] = m.group(2)
 
+            return output
 
 
 
-	def delete( self, lstUIDs ) :
 
-		'''
-		Method marks the emails specified by list lstUIDs for deletion by setting the \Deleted flag.
+    def fetch( self, lstUIDs, strFetch ) :
 
-		Note: The emails won't actually be deleted until the .logout or .expunge method is called.
-		'''
+        '''
+        Wrapper method for the IMAP 'fetch' command. This accepts the standard string used in an IMAP 'fetch' request, along with a list of UIDs identifying the emails for which the fetch request will be carried out. The output is the raw unformatted, unfiltered text that is returned by the server.
 
-		try :
-			self.mail.uid( 'STORE', ','.join( lstUIDs ), '+FLAGS', '(\Deleted)' )		# The command wouldn't work without putting some of the strings in all caps
+        The standard request to get just 'From' and 'Subject' fields is to use strFetch = '(BODY[HEADER.FIELDS (from subject)])'
+        '''
 
-		except :
-			print( 'Unable to set \Deleted flags on specified emails.' )
+        try :
+            return self.mail.uid( 'fetch', ','.join( lstUIDs ), strFetch )[1]
 
+        except :
+            print( 'Unable to fetch (raw) fields for emails from folder ' + self.folder )
 
 
-	
-	def expunge( self ) :
 
-		'''
-		Method calls the IMAP expunge command which permenantly deletes any emails marked for deletion in the current folder.
-		'''
+    def copy( self, lstUIDs, folder ) :
 
-		self.mail.expunge()
+        '''
+        Method copyies the emails specified by list 'lstUIDs' to the specified folder (a string). This method will work with EXAMINE as well as SELECT.
+        '''
+
+        try :
+            self.mail.uid( 'copy', ','.join( lstUIDs ), folder )
+
+        except :
+            print( 'Unable to copy specified emails to folder ' + folder + '.' )
+
+
+
+
+    def delete( self, lstUIDs ) :
+
+        '''
+        Method marks the emails specified by list lstUIDs for deletion by setting the \Deleted flag.
+
+        Note: The emails won't actually be deleted until the .logout or .expunge method is called.
+        '''
+
+        try :
+            self.mail.uid( 'STORE', ','.join( lstUIDs ), '+FLAGS', '(\Deleted)' )		# The command wouldn't work without putting some of the strings in all caps
+
+        except :
+            print( 'Unable to set \Deleted flags on specified emails.' )
+
+
+
+
+    def expunge( self ) :
+
+        '''
+        Method calls the IMAP expunge command which permenantly deletes any emails marked for deletion in the current folder.
+        '''
+
+        self.mail.expunge()
 
 
 
 
 def _substring( pattern, string ) :
 
-	'''
-	This is a hidden external function in this module which is used to extract a specific substring of a string based on a pattern supplied. The pattern is regex where the first group specified will be returned.
-	'''
+    '''
+    This is a hidden external function in this module which is used to extract a specific substring of a string based on a pattern supplied. The pattern is regex where the first group specified will be returned.
+    '''
 
-	import re
+    import re
 
-	m = re.match( pattern, string )
+    m = re.match( pattern, string )
 
-	if m:				# Match was succesful
-		return m.group(1)
+    if m:				# Match was succesful
+        return m.group(1)
 
-	else :
-		return None
+    else :
+        return None
 
 
 def _reduceWhitespace( string ) :
 
-	'''
-	This is a hidden external function that is meant to be applied on strings returned by the imap server. Its intent is to remove '\r' and '\n', replace '\t' with a single space and reduce any occurence of more than one consecutive space with a single space. It achieves this using regular expressions and the substitute command.
-	'''
-	
-	import re
+    '''
+    This is a hidden external function that is meant to be applied on strings returned by the imap server. Its intent is to remove '\r' and '\n', replace '\t' with a single space and reduce any occurence of more than one consecutive space with a single space. It achieves this using regular expressions and the substitute command.
+    '''
 
-	return re.sub( ' \s*', ' ', re.sub( '\t', ' ', re.sub( '[\r|\n]', '', string ) ) )
+    import re
+
+    return re.sub( ' \s*', ' ', re.sub( '\t', ' ', re.sub( '[\r|\n]', '', string ) ) )
