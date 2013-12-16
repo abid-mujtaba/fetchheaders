@@ -187,7 +187,7 @@ def applyArgs( args, servers, globalSettings ) :
 
             if not item in servers.keys() :		# If one of the items in the comma-separated list is NOT an account specified in the configuration file
 
-                print( '\nError: ' + item + ' is not a valid IMAP account name specified in the configruation file.' )
+                print( '\nError: ' + item + ' is not a valid IMAP account name specified in the configuration file.' )
 
                 import sys
 
