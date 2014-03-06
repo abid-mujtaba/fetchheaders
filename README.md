@@ -28,7 +28,7 @@ Date: Sep. 24, 1012
 ## LICENSE
 
 ```
-Copyright 2014 Abid Hasan Mujtaba
+Copyright 2012 Abid Hasan Mujtaba
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
