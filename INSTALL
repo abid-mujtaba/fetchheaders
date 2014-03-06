@@ -1,6 +1,18 @@
-# Copyright (c) 2012 Abid Hasan Mujtaba
-# See the file LICENSE for copying permission.
-
+# Copyright 2014 Abid Hasan Mujtaba
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#
 # This file contains instructions on installing and uninstalling 'fetchheaders'. The recommened technique is to use make. For available options run 'make help'.
 #
 # Note: Any commands (including make commands) that require copying or deleting files in folders accessible only by root must be run as root. In Ubuntu this corresponds to prefacing said commands with 'sudo'.
