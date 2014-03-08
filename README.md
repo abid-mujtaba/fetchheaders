@@ -22,10 +22,10 @@ Please feel free to email the author of the program if problems arise.
 Author: Abid H. Mujtaba
 Email: abid.naqvi83@gmail.com
 
-Date: Sep. 24, 1012
+Date: Sep. 24, 2012
 
 
-## LICENSE
+### LICENSE
 
 ```
 Copyright 2012 Abid Hasan Mujtaba
