@@ -27,6 +27,7 @@
 # Enable Python 3.x style print function:
 
 from __future__ import print_function
+import re
 
 # Create global variables that implement global settings which are used by the following functions.
 
@@ -197,17 +198,22 @@ def applyArgs( args, servers, globalSettings ) :
 
         for item in args.accounts.split( ',' ) :	# We are expecting a comma-separated list
 
-            if not item in servers.keys() :		# If one of the items in the comma-separated list is NOT an account specified in the configuration file
+            # We create a list of servers the START of whose names (lowercase) matches the item in the argument list currently under consideration
+            matching_servers = [x for x in servers.keys() if re.match('^' + item.lower(), x.lower())]
 
-                print( '\nError: ' + item + ' is not a valid IMAP account name specified in the configuration file.' )
+            if matching_servers:            # A match has occurred
+
+                for server in matching_servers:         # All matching servers are added to the list displayed
+
+                    newServers[ server ] = servers[ server ]
+
+            else:           # No match has occurred. This is an error.
+
+                print( '\nError: ' + item + ' is not the beginning of a valid IMAP account name specified in the configuration file.' )
 
                 import sys
 
                 sys.exit(1)
-
-            else :
-
-                newServers[ item ] = servers[ item ]
 
         servers = newServers
 
