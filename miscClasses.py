@@ -120,9 +120,9 @@ def pollAccount( account ) :
                 if m:
                     strFrom = m.group(1)
 
-                email.From = strFrom
+                email.From = emailHeader( strFrom )             # The From and Subject headers can be MIME encoded so we use emailHeader to parse them
                 email.Date = convertDate( line[ 'date' ] )
-                email.Subject = line[ 'subject' ]
+                email.Subject = emailHeader( line[ 'subject' ] )
 
                 email.uid = uid		# Store the email's uid along with it for later usage
 
@@ -528,3 +528,19 @@ def strWidth( string, width, align = '<', fill = True ) :
             string = ( '{:' + align + str(width) + '.' + str(width) + '}' ).format( string )
 
     return string
+
+
+
+def emailHeader(header):
+    """
+    Takes an email header and decodes it if it has been MIME-encoded.
+
+    :param header: The email header to be decoded
+    :return: The decoded header returned as a string
+    """
+
+    from email.header import decode_header
+
+    dh = decode_header(header)          # Returns a list of 2-tuples where the first element is the decoded string and the second is the encoding corresponding to it
+
+    return ''.join(unicode(t[0], t[1] or 'ASCII') for t in dh)          # We concatenate the decoded strings by using unicode to interpret each part using its corresponding encoding. If there is no encoding we default to ASCII (hence the use of t[1] or 'ASCII').
