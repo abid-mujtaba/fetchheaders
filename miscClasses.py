@@ -431,7 +431,15 @@ def convertDate( strDate ) :
     This function accepts the date string as returned by the IMAP server and translates it in to the client's local time (zone) and returns it as a string formatted as desired in the final output.
     '''
 
-    from dateutil.parser import parse as dateParse
+    try:
+        from dateutil.parser import parse as dateParse
+
+    except ImportError:
+
+        print("dateutil module missing. Try: pip install python-dateutil")
+        import sys
+        sys.exit(1)
+
 
     dt = dateParse( strDate.split( '(' ) [0] )		# We perform a split on the left parenthesis for the sometime possibility that the date string ends with something like (GMT-06:00)
 

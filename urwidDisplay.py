@@ -39,7 +39,13 @@ class urwidDisplay() :
 
         # Import the necessary modules and functions:
 
-        import urwid
+        try:
+            import urwid
+        except ImportError:
+            print("urwid module missing. Try: pip install urwid")
+            import sys
+            sys.exit(1)
+
         from miscClasses import threadedExec		# This function implements email account access using threads
 
 
