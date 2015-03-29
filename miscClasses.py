@@ -528,7 +528,7 @@ def strWidth( string, width, align = '<', fill = True ) :
 
         formatString = '{:' + align + str(width) + '.' + str(width) + '}'
 
-        string = formatString.format( string )
+        string = formatString.format( string.encode('utf-8') )      # We explicitly encode the string using utf-8 so that a UnicodeEncodeError is not thrown when unicode characters are encountered in the string
 
     else :
         if len( string ) > width :		# Truncate the string to the specified width
