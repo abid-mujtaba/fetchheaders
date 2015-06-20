@@ -39,7 +39,7 @@ def pollAccount( account ) :
 
     numUnseen = -1		# Set unequal to zero in case showNums = False
 
-    mail = imapServer( account['host'], account['useSSL'] )
+    mail = imapServer( account['host'], account['useSSL'] )     # We pass in the useSSL flag that we get from config which tells imapServer whether SSL is to be used or not
 
     mail.login( account['username'], account['password'] )
 

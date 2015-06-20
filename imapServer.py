@@ -285,12 +285,24 @@ class imapServer: 	# This class implements all the functionality we need from th
         else :
             import re
 
+            # Different email servers use different formats for reporting the flags associated with emails in the folder. So we provide a list of regular expressions to cover all the possibilities.
+            # These are formatted as a list of lists.
+            # Each list contains three items:
+            # (i) Actual regex
+            # (ii) The index of the group in the regex that contains the uid
+            # (iii) The index of the group in the regex that contains the flags
+            # The latter two are used to constuct the 'output' dictionary
+            regexes = [['.*UID ([0-9]+)[^\(]*\(([^\)]*)\).*', 1, 2], ['.*FLAGS \(([^\)]*)\) UID ([0-9]+).*', 2, 1]]
+
             for item in data :
 
-                m = re.match( '.*UID ([0-9]*)[^\(]*\(([^\)]*).*', item )
+                for regex in regexes:
 
-                if m:
-                    output[ m.group(1) ] = m.group(2)
+                    m = re.match(regex[0], item)
+
+                    if m:
+                        output[ m.group(regex[1]) ] = m.group(regex[2])
+                        break
 
             return output
 
