@@ -28,20 +28,23 @@
 
 class imapServer: 	# This class implements all the functionality we need from the interface with a given imap server. It forms a wrapper around the 'imaplib' module.
 
-    def __init__( self, server ) :
+    def __init__( self, server, use_ssl=True ) :
 
         '''
         This is the constructor function for this class. It requires the servername in the form of a string.
 
-        Note: All connections will be made using SSL so only SSL enabled imap servers are accessible.
+        The flag 'use_ssl' determines whether SSL will be used to connect to the specified IMAP server.
         '''
 
         self.server = server
 
         import imaplib		# Import the crucial module that allows interaction with IMAP servers
 
-        try :
-            self.mail = imaplib.IMAP4_SSL( self.server )		# Establish connection with the server.
+        try:
+            if use_ssl:
+                self.mail = imaplib.IMAP4_SSL( self.server )		# Establish connection with the server.
+            else:
+                self.mail = imaplib.IMAP4( self.server )
 
         except:
             print( 'Unable to establish SSL connection to IMAP server ' + self.server )

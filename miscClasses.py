@@ -39,8 +39,7 @@ def pollAccount( account ) :
 
     numUnseen = -1		# Set unequal to zero in case showNums = False
 
-
-    mail = imapServer( account['host'] )
+    mail = imapServer( account['host'], account['useSSL'] )
 
     mail.login( account['username'], account['password'] )
 

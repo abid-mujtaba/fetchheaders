@@ -35,6 +35,7 @@
 	showOnlyNums = boolean( default = False )
 	trashFolder = string( default = 'Trash' )
 	deleteEmails = boolean( default = True )
+	useSSL = boolean( default = True )
 
 
 [global]
